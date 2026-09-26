@@ -48,15 +48,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         item.button?.setAccessibilityLabel("\(peripheral.type.displayName): \(peripheral.name), \(title(for: peripheral.state))")
 
         if let menu = menus[peripheral.type] {
-            menu.items[0].title = peripheral.name
-            menu.items[0].attributedTitle = NSAttributedString(string: peripheral.name, attributes: [
-                .foregroundColor: NSColor.textColor,
+            updateInfoItem(menu.items[0], title: peripheral.name, display: NSAttributedString(string: peripheral.name, attributes: [
+                .foregroundColor: NSColor.labelColor,
                 .font: NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
-            ])
-            menu.items[1].title = "● \(title(for: peripheral.state))"
-            let statusTitle = NSMutableAttributedString(string: "●", attributes: [.foregroundColor: color(for: peripheral.state)])
-            statusTitle.append(NSAttributedString(string: " \(title(for: peripheral.state))", attributes: [.foregroundColor: NSColor.textColor]))
-            menu.items[1].attributedTitle = statusTitle
+            ]))
+            let statusText = title(for: peripheral.state)
+            let statusTitle = NSMutableAttributedString(string: "●\u{2002}", attributes: [.foregroundColor: color(for: peripheral.state)])
+            statusTitle.append(NSAttributedString(string: statusText, attributes: [.foregroundColor: NSColor.labelColor]))
+            updateInfoItem(menu.items[1], title: statusText, display: statusTitle)
+            let batteryTitle = peripheral.batteryPercent.map { "Battery \($0)%" } ?? ""
+            updateInfoItem(menu.items[2], title: batteryTitle, display: NSAttributedString(string: batteryTitle, attributes: [.foregroundColor: NSColor.labelColor]))
+            menu.items[2].isHidden = peripheral.state != .connected || peripheral.batteryPercent == nil
         }
     }
 
@@ -88,10 +90,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
         menu.autoenablesItems = false
-        let name = NSMenuItem(title: type.displayName, action: nil, keyEquivalent: "")
-        let state = NSMenuItem(title: "● Unavailable", action: nil, keyEquivalent: "")
+        let name = infoItem(type.displayName)
+        let state = infoItem("Unavailable")
+        let battery = infoItem("")
+        battery.isHidden = true
         menu.addItem(name)
         menu.addItem(state)
+        menu.addItem(battery)
         menu.addItem(.separator())
         menu.addItem(actionItem("Settings…", #selector(openSettings)))
         menu.addItem(actionItem("Launch at Login", #selector(toggleLogin)))
@@ -99,6 +104,24 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(actionItem("Quit Bluetooth Status", #selector(quit)))
         menus[type] = menu
         return menu
+    }
+
+    private func infoItem(_ title: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        let row = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 22))
+        row.addSubview(NSTextField(labelWithString: title))
+        item.view = row
+        return item
+    }
+
+    private func updateInfoItem(_ item: NSMenuItem, title: String, display: NSAttributedString) {
+        item.title = title
+        guard let row = item.view, let label = row.subviews.first as? NSTextField else { return }
+        label.attributedStringValue = display
+        label.sizeToFit()
+        row.frame.size.width = max(220, ceil(label.frame.width) + 32)
+        label.frame.origin = NSPoint(x: 18, y: floor((22 - label.frame.height) / 2))
     }
 
     private func actionItem(_ title: String, _ selector: Selector) -> NSMenuItem {

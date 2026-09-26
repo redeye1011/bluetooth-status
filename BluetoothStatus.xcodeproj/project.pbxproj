@@ -13,6 +13,7 @@
 		4DA7E7B31CDBF00C9E3AE080 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4EF29974E1F26898F206D57C /* ServiceManagement.framework */; };
 		50150E1AA9F094C711C02131 /* SingleInstanceLockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC9B54E28C4924AE13B9291A /* SingleInstanceLockTests.swift */; };
 		5D3856EFE62E1997253A75B2 /* SingleInstanceLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63796F7C2F6A2BD818056F98 /* SingleInstanceLock.swift */; };
+		666B9AAF87F76F2B7524038A /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8EF2FE7CDA50CDC5E1DF40D3 /* CoreBluetooth.framework */; };
 		6DC991DD4FBBDAC9A6147B1F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FE2372890D9C7621B996FD /* AppDelegate.swift */; };
 		7324E52D573DC4AA4EA10356 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ACC7FF99F75556D1DDF60DD /* SettingsView.swift */; };
 		7592374151B1C4B66F5F5CA9 /* SystemProfilerSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 038927A9B576F14440608972 /* SystemProfilerSnapshotTests.swift */; };
@@ -28,6 +29,7 @@
 		D2181EC3BD81F2DF45C476F6 /* IOBluetoothTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EBBDBA4730B8F0E343C5F7B /* IOBluetoothTransport.swift */; };
 		DA7C6815F071CFF0BD0A4194 /* BluetoothStatusApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6656005287FA203941BDE4D4 /* BluetoothStatusApp.swift */; };
 		DE00566AFB99553C726A7821 /* DeviceMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA3697FF19A3E5C4939A73FD /* DeviceMonitorTests.swift */; };
+		E59241E4EB5C9687C853D527 /* CoreBluetoothBatteryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF9C137F12F03840C09943C /* CoreBluetoothBatteryReader.swift */; };
 		F9A7AE60D7758A0BC551C91E /* PreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87997E702352288D791AFCA7 /* PreferencesStore.swift */; };
 /* End PBXBuildFile section */
 
@@ -54,8 +56,10 @@
 		7963F7FE7F23A1E578710398 /* PreferencesStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesStoreTests.swift; sourceTree = "<group>"; };
 		79A5162B5F0075C67C7AAA67 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		7ACC7FF99F75556D1DDF60DD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		7DF9C137F12F03840C09943C /* CoreBluetoothBatteryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothBatteryReader.swift; sourceTree = "<group>"; };
 		87997E702352288D791AFCA7 /* PreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesStore.swift; sourceTree = "<group>"; };
 		89D2BFD668C3A49C18C8F719 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
+		8EF2FE7CDA50CDC5E1DF40D3 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		9A07C27EA6D691546C06BEE7 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		9EBBDBA4730B8F0E343C5F7B /* IOBluetoothTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBluetoothTransport.swift; sourceTree = "<group>"; };
 		A5FE2372890D9C7621B996FD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -76,6 +80,7 @@
 			files = (
 				C6442FF0A35E0FC175BDB957 /* IOBluetooth.framework in Frameworks */,
 				9D4D7702C9294E807E2440B2 /* IOKit.framework in Frameworks */,
+				666B9AAF87F76F2B7524038A /* CoreBluetooth.framework in Frameworks */,
 				C964B0F534865FC1C696950E /* CoreAudio.framework in Frameworks */,
 				4DA7E7B31CDBF00C9E3AE080 /* ServiceManagement.framework in Frameworks */,
 			);
@@ -97,6 +102,7 @@
 		0D6EE07FC331FD1BDAC16DEB /* Bluetooth */ = {
 			isa = PBXGroup;
 			children = (
+				7DF9C137F12F03840C09943C /* CoreBluetoothBatteryReader.swift */,
 				C48B8F5F3D1CC756CC12D185 /* DeviceMonitor.swift */,
 				9EBBDBA4730B8F0E343C5F7B /* IOBluetoothTransport.swift */,
 				0F69C058B2C232ACF93131A4 /* SystemProfilerSnapshot.swift */,
@@ -126,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				9A07C27EA6D691546C06BEE7 /* CoreAudio.framework */,
+				8EF2FE7CDA50CDC5E1DF40D3 /* CoreBluetooth.framework */,
 				CE06345CD340BC37AFC23456 /* IOBluetooth.framework */,
 				673947B048E91B9DB8A6B69D /* IOKit.framework */,
 				4EF29974E1F26898F206D57C /* ServiceManagement.framework */,
@@ -288,6 +295,7 @@
 			files = (
 				6DC991DD4FBBDAC9A6147B1F /* AppDelegate.swift in Sources */,
 				DA7C6815F071CFF0BD0A4194 /* BluetoothStatusApp.swift in Sources */,
+				E59241E4EB5C9687C853D527 /* CoreBluetoothBatteryReader.swift in Sources */,
 				B9262BF9143EB65461CD1BE6 /* DeviceMonitor.swift in Sources */,
 				D2181EC3BD81F2DF45C476F6 /* IOBluetoothTransport.swift in Sources */,
 				0333299F070E13AD44A7F4B7 /* LoginItemManager.swift in Sources */,

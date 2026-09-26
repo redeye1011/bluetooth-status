@@ -16,10 +16,11 @@ targets:
       properties:
         CFBundleDisplayName: Bluetooth Status
         LSUIElement: true
-        NSBluetoothAlwaysUsageDescription: Bluetooth Status checks the connection of your selected keyboard, mouse, and speaker.
+        NSBluetoothAlwaysUsageDescription: Bluetooth Status checks connection and battery level for your selected keyboard, mouse, and speaker.
     dependencies:
       - sdk: IOBluetooth.framework
       - sdk: IOKit.framework
+      - sdk: CoreBluetooth.framework
       - sdk: CoreAudio.framework
       - sdk: ServiceManagement.framework
   BluetoothStatusTests:

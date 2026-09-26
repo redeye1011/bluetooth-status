@@ -19,4 +19,23 @@ final class SystemProfilerSnapshotTests: XCTestCase {
         ])
         XCTAssertEqual(snapshot.connectedAddresses, ["AA:BB:CC:DD:EE:FF"])
     }
+
+    func testParsesOnlyValidConnectedBatteryPercentages() throws {
+        let json = """
+        {"SPBluetoothDataType":[{
+          "controller_properties":{"controller_state":"attrib_on"},
+          "device_connected":[
+            {"Keyboard":{"device_address":"K","device_batteryLevelMain":"0%"}},
+            {"Mouse":{"device_address":"M","device_batteryLevelMain":"100%"}},
+            {"Speaker":{"device_address":"S","device_batteryLevelMain":"82%"}},
+            {"Invalid":{"device_address":"I","device_batteryLevelMain":"101%"}},
+            {"Unknown":{"device_address":"U"}}
+          ],
+          "device_not_connected":[{"Old":{"device_address":"D","device_batteryLevelMain":"50%"}}]
+        }]}
+        """
+
+        let snapshot = try XCTUnwrap(SystemProfilerSnapshot.parse(Data(json.utf8)))
+        XCTAssertEqual(snapshot.batteryPercentByAddress, ["K": 0, "M": 100, "S": 82])
+    }
 }

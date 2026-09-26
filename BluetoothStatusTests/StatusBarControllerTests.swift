@@ -45,6 +45,40 @@ final class StatusBarControllerTests: XCTestCase {
         XCTAssertTrue(containsRed(status.speakerItem.button?.image))
     }
 
+    func testConnectedMenusShowBatteryForEveryGlyph() {
+        let status = StatusBarController()
+        for type in PeripheralType.allCases {
+            let item: NSStatusItem
+            switch type {
+            case .keyboard: item = status.keyboardItem
+            case .mouse: item = status.mouseItem
+            case .speaker: item = status.speakerItem
+            }
+            status.update(PeripheralState(id: "A", name: type.displayName, type: type, state: .connected, batteryPercent: 82))
+            XCTAssertEqual(item.menu?.items[2].title, "Battery 82%")
+            XCTAssertEqual(item.menu?.items[2].isHidden, false)
+            XCTAssertEqual(item.menu?.items.prefix(3).map(\.isEnabled), [false, false, false])
+            XCTAssertTrue(item.menu?.items.prefix(3).allSatisfy { $0.view != nil } == true)
+            XCTAssertEqual(item.menu?.items[4].isEnabled, true)
+            let state = item.menu?.items[1].view?.subviews.first as? NSTextField
+            let battery = item.menu?.items[2].view?.subviews.first as? NSTextField
+            XCTAssertEqual(state?.attributedStringValue.string, "●\u{2002}Connected")
+            XCTAssertEqual(state?.attributedStringValue.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor, .systemGreen)
+            XCTAssertEqual(state?.attributedStringValue.attribute(.foregroundColor, at: 2, effectiveRange: nil) as? NSColor, .labelColor)
+            XCTAssertEqual(battery?.attributedStringValue.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor, .labelColor)
+            XCTAssertEqual(item.button?.toolTip, "\(type.displayName) — Connected")
+            XCTAssertEqual(item.button?.accessibilityLabel(), "\(type.displayName): \(type.displayName), Connected")
+
+            status.update(PeripheralState(id: "A", name: type.displayName, type: type, state: .connected))
+            XCTAssertEqual(item.menu?.items[2].title, "")
+            XCTAssertEqual(item.menu?.items[2].isHidden, true)
+
+            status.update(PeripheralState(id: "A", name: type.displayName, type: type, state: .disconnected, batteryPercent: 82))
+            XCTAssertEqual(item.button?.toolTip, "\(type.displayName) — Disconnected")
+            XCTAssertEqual(item.menu?.items[2].isHidden, true)
+        }
+    }
+
     func testIndependentItemsShowSelectedDeviceStates() {
         let status = StatusBarController()
         XCTAssertFalse(status.keyboardItem === status.mouseItem)
@@ -62,11 +96,15 @@ final class StatusBarControllerTests: XCTestCase {
         XCTAssertEqual(status.speakerItem.button?.toolTip, "JBL Boombox 2 — Connected")
         status.update(PeripheralState(id: "SPEAKER", name: "JBL Boombox 2", type: .speaker, state: .disconnected))
         XCTAssertTrue(containsRed(status.speakerItem.button?.image))
-        XCTAssertEqual(status.mouseItem.menu?.items[0].isEnabled, true)
-        XCTAssertEqual(status.mouseItem.menu?.items[1].isEnabled, true)
+        XCTAssertEqual(status.mouseItem.menu?.items[0].isEnabled, false)
+        XCTAssertEqual(status.mouseItem.menu?.items[1].isEnabled, false)
         XCTAssertEqual(status.mouseItem.menu?.autoenablesItems, false)
-        XCTAssertEqual(status.mouseItem.menu?.items[0].attributedTitle?.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor, .textColor)
-        XCTAssertEqual(status.mouseItem.menu?.items[1].attributedTitle?.attribute(.foregroundColor, at: 2, effectiveRange: nil) as? NSColor, .textColor)
+        let name = status.mouseItem.menu?.items[0].view?.subviews.first as? NSTextField
+        let state = status.mouseItem.menu?.items[1].view?.subviews.first as? NSTextField
+        XCTAssertEqual(name?.attributedStringValue.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor, .labelColor)
+        XCTAssertEqual(state?.attributedStringValue.string, "●\u{2002}Disconnected")
+        XCTAssertEqual(state?.attributedStringValue.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor, .systemRed)
+        XCTAssertEqual(state?.attributedStringValue.attribute(.foregroundColor, at: 2, effectiveRange: nil) as? NSColor, .labelColor)
     }
 
     func testEveryDeviceHasDistinctConnectedAndDisconnectedImagesInEachStyle() {

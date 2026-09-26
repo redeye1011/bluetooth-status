@@ -153,10 +153,6 @@ struct SettingsView: View {
     }
 
     private func save() {
-        guard keyboardVisible || mouseVisible || speakerVisible else {
-            errorMessage = "Keep at least one icon visible to reopen Settings."
-            return
-        }
         preferences.setAddress(keyboardAddress.isEmpty ? nil : keyboardAddress, for: .keyboard)
         preferences.setAddress(mouseAddress.isEmpty ? nil : mouseAddress, for: .mouse)
         preferences.setAddress(speakerAddress.isEmpty ? nil : speakerAddress, for: .speaker)

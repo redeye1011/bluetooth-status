@@ -4,6 +4,7 @@ struct SystemProfilerSnapshot {
     let poweredOn: Bool
     let devices: [PairedDevice]
     let connectedAddresses: Set<String>
+    let batteryPercentByAddress: [String: Int]
 
     static func parse(_ data: Data) -> Self? {
         guard
@@ -14,19 +15,30 @@ struct SystemProfilerSnapshot {
 
         var devices: [PairedDevice] = []
         var connectedAddresses: Set<String> = []
+        var batteryPercentByAddress: [String: Int] = [:]
         for (key, connected) in [("device_connected", true), ("device_not_connected", false)] {
             for group in bluetooth[key] as? [[String: [String: Any]]] ?? [] {
                 for (name, details) in group {
                     guard let address = details["device_address"] as? String else { continue }
                     devices.append(PairedDevice(id: address, name: name.trimmingCharacters(in: .whitespaces)))
-                    if connected { connectedAddresses.insert(address) }
+                    if connected {
+                        connectedAddresses.insert(address)
+                        if let raw = details["device_batteryLevelMain"] as? String {
+                            let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let digits = value.hasSuffix("%") ? String(value.dropLast()) : value
+                            if let percent = Int(digits), (0...100).contains(percent) {
+                                batteryPercentByAddress[address] = percent
+                            }
+                        }
+                    }
                 }
             }
         }
         return Self(
             poweredOn: controller["controller_state"] as? String == "attrib_on",
             devices: devices,
-            connectedAddresses: connectedAddresses
+            connectedAddresses: connectedAddresses,
+            batteryPercentByAddress: batteryPercentByAddress
         )
     }
 }

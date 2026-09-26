@@ -9,6 +9,8 @@ final class IOBluetoothTransport: NSObject, BluetoothTransport {
     private let cacheLock = NSLock()
     private var cachedDevices: [PairedDevice] = []
     private var cachedConnections: Set<String> = []
+    private var cachedBatteryPercents: [String: Int] = [:]
+    private var cachedBLEBatteryPercents: [String: Int] = [:]
     private var cachedPower = false
 
     private var onEvent: ((String?) -> Void)?
@@ -16,6 +18,7 @@ final class IOBluetoothTransport: NSObject, BluetoothTransport {
     private var disconnectNotifications: [String: IOBluetoothUserNotification] = [:]
     private var powerObservers: [NSObjectProtocol] = []
     private var hidManager: IOHIDManager?
+    private var batteryReader: CoreBluetoothBatteryReader?
     private var audioListener: AudioObjectPropertyListenerBlock?
 
     var isPoweredOn: Bool {
@@ -34,6 +37,25 @@ final class IOBluetoothTransport: NSObject, BluetoothTransport {
         cacheLock.lock()
         defer { cacheLock.unlock() }
         return cachedConnections.contains(address)
+    }
+
+    func batteryPercent(address: String) -> Int? {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        return cachedBatteryPercents[address] ?? cachedBLEBatteryPercents[address]
+    }
+
+    func requestBattery(address: String, force: Bool) {
+        cacheLock.lock()
+        let hasSnapshotReading = cachedBatteryPercents[address] != nil
+        cacheLock.unlock()
+        guard !hasSnapshotReading else { return }
+        if batteryReader == nil {
+            batteryReader = CoreBluetoothBatteryReader { [weak self] address, percent in
+                self?.updateBLEBattery(address: address, percent: percent)
+            }
+        }
+        batteryReader?.request(address: address, force: force)
     }
 
     func start(onEvent: @escaping (String?) -> Void) {
@@ -70,6 +92,8 @@ final class IOBluetoothTransport: NSObject, BluetoothTransport {
 
     func stop() {
         onEvent = nil
+        batteryReader?.stop()
+        batteryReader = nil
         powerObservers.forEach { NotificationCenter.default.removeObserver($0) }
         powerObservers.removeAll()
         if let hidManager {
@@ -95,6 +119,8 @@ final class IOBluetoothTransport: NSObject, BluetoothTransport {
         guard let snapshot = SystemProfilerBluetooth.read() else {
             cacheLock.lock()
             cachedPower = false
+            cachedBatteryPercents = [:]
+            cachedBLEBatteryPercents = [:]
             cacheLock.unlock()
             DispatchQueue.main.async { [weak self] in self?.onEvent?(nil) }
             return
@@ -103,8 +129,25 @@ final class IOBluetoothTransport: NSObject, BluetoothTransport {
         cachedPower = snapshot.poweredOn
         cachedDevices = snapshot.devices
         cachedConnections = snapshot.connectedAddresses
+        cachedBatteryPercents = snapshot.batteryPercentByAddress
+        cachedBLEBatteryPercents = cachedBLEBatteryPercents.filter {
+            snapshot.poweredOn && snapshot.connectedAddresses.contains($0.key)
+        }
         cacheLock.unlock()
         DispatchQueue.main.async { [weak self] in self?.onEvent?(changedAddress) }
+    }
+
+    private func updateBLEBattery(address: String, percent: Int?) {
+        cacheLock.lock()
+        guard cachedPower, cachedConnections.contains(address) else {
+            cacheLock.unlock()
+            return
+        }
+        let previous = cachedBatteryPercents[address] ?? cachedBLEBatteryPercents[address]
+        cachedBLEBatteryPercents[address] = percent
+        let current = cachedBatteryPercents[address] ?? cachedBLEBatteryPercents[address]
+        cacheLock.unlock()
+        if previous != current { onEvent?(address) }
     }
 
     private func startHIDNotifications() {

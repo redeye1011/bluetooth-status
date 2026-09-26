@@ -40,6 +40,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         monitor.stop()
     }
 
+    func applicationDidBecomeActive(_ notification: Notification) {
+        if instanceLock != nil && !hasVisibleStatusItems { showSettings() }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        if instanceLock != nil && !hasVisibleStatusItems { showSettings() }
+        return false
+    }
+
+    private var hasVisibleStatusItems: Bool {
+        PeripheralType.allCases.contains { preferences.isVisible($0) }
+    }
+
     private func showSettings() {
         if let settingsWindow, settingsWindow.isVisible {
             settingsWindow.makeKeyAndOrderFront(nil)

@@ -38,6 +38,20 @@ final class PreferencesStoreTests: XCTestCase {
         XCTAssertTrue(first.isVisible(.speaker))
     }
 
+    func testAllIconsCanStayHiddenWithoutForcingInitialSetup() {
+        let suite = UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = PreferencesStore(defaults: defaults)
+        preferences.setAddress("KEYBOARD", for: .keyboard)
+        for type in PeripheralType.allCases { preferences.setVisible(false, for: type) }
+
+        let reopened = PreferencesStore(defaults: defaults)
+        XCTAssertTrue(PeripheralType.allCases.allSatisfy { !reopened.isVisible($0) })
+        XCTAssertEqual(reopened.address(for: .keyboard), "KEYBOARD")
+        XCTAssertFalse(reopened.needsInitialSetup)
+    }
+
     func testGeneratedIconFamilyPersists() {
         let suite = UUID().uuidString
         let defaults = UserDefaults(suiteName: suite)!

@@ -23,6 +23,6 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Bluetooth Status checks the connection of your selected keyboard, mouse, and speaker.</string>
+	<string>Bluetooth Status checks connection and battery level for your selected keyboard, mouse, and speaker.</string>
 </dict>
 </plist>

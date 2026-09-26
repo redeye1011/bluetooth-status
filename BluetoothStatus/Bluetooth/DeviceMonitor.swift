@@ -4,6 +4,8 @@ protocol BluetoothTransport: AnyObject {
     var isPoweredOn: Bool { get }
     func pairedDevices() -> [PairedDevice]
     func isConnected(address: String) -> Bool
+    func batteryPercent(address: String) -> Int?
+    func requestBattery(address: String, force: Bool)
     func start(onEvent: @escaping (String?) -> Void)
     func reconcile()
     func stop()
@@ -86,8 +88,12 @@ final class DeviceMonitor {
                 id: selected ?? "",
                 name: device?.name ?? type.displayName,
                 type: type,
-                state: state
+                state: state,
+                batteryPercent: state == .connected ? device.flatMap { bluetooth.batteryPercent(address: $0.id) } : nil
             )
+            if state == .connected, let device {
+                bluetooth.requestBattery(address: device.id, force: lastStates[type]?.state != .connected)
+            }
             if lastStates[type] != peripheral {
                 lastStates[type] = peripheral
                 onChange?(peripheral)

@@ -61,16 +61,61 @@ final class DeviceMonitorTests: XCTestCase {
         XCTAssertEqual(changes, [PeripheralState(id: "SPEAKER", name: "JBL Boombox 2", type: .speaker, state: .connected)])
         monitor.stop()
     }
+
+    func testBatteryChangesUpdateOnlySelectedConnectedDevice() {
+        let suite = UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = PreferencesStore(defaults: defaults)
+        preferences.setAddress("KEYBOARD", for: .keyboard)
+        preferences.setAddress("MOUSE", for: .mouse)
+        let bluetooth = FakeBluetoothTransport()
+        bluetooth.devices = [
+            PairedDevice(id: "KEYBOARD", name: "Keyboard"),
+            PairedDevice(id: "MOUSE", name: "Mouse")
+        ]
+        bluetooth.connected = ["KEYBOARD", "MOUSE"]
+        bluetooth.batteries = ["KEYBOARD": 75, "MOUSE": 60]
+
+        let monitor = DeviceMonitor(preferences: preferences, bluetooth: bluetooth)
+        var changes: [PeripheralState] = []
+        monitor.onChange = { changes.append($0) }
+        monitor.start()
+        XCTAssertEqual(changes.prefix(2).map(\.batteryPercent), [75, 60])
+        XCTAssertEqual(bluetooth.batteryRequests.map(\.1), [true, true])
+
+        changes.removeAll()
+        bluetooth.batteries["MOUSE"] = 59
+        bluetooth.emit(address: "MOUSE")
+        XCTAssertEqual(changes, [PeripheralState(id: "MOUSE", name: "Mouse", type: .mouse, state: .connected, batteryPercent: 59)])
+        XCTAssertEqual(bluetooth.batteryRequests.last?.1, false)
+
+        changes.removeAll()
+        bluetooth.connected.remove("MOUSE")
+        bluetooth.emit(address: "MOUSE")
+        XCTAssertEqual(changes, [PeripheralState(id: "MOUSE", name: "Mouse", type: .mouse, state: .disconnected)])
+
+        changes.removeAll()
+        bluetooth.connected.insert("MOUSE")
+        bluetooth.emit(address: "MOUSE")
+        XCTAssertEqual(changes, [PeripheralState(id: "MOUSE", name: "Mouse", type: .mouse, state: .connected, batteryPercent: 59)])
+        XCTAssertEqual(bluetooth.batteryRequests.last?.1, true)
+        monitor.stop()
+    }
 }
 
 private final class FakeBluetoothTransport: BluetoothTransport {
     var devices: [PairedDevice] = []
     var connected: Set<String> = []
+    var batteries: [String: Int] = [:]
+    var batteryRequests: [(String, Bool)] = []
     var isPoweredOn = true
     private var onEvent: ((String?) -> Void)?
 
     func pairedDevices() -> [PairedDevice] { devices }
     func isConnected(address: String) -> Bool { connected.contains(address) }
+    func batteryPercent(address: String) -> Int? { batteries[address] }
+    func requestBattery(address: String, force: Bool) { batteryRequests.append((address, force)) }
     func start(onEvent: @escaping (String?) -> Void) { self.onEvent = onEvent }
     func reconcile() { onEvent?(nil) }
     func stop() { onEvent = nil }

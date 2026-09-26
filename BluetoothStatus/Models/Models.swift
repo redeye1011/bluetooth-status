@@ -66,4 +66,13 @@ struct PeripheralState: Equatable {
     let name: String
     let type: PeripheralType
     let state: ConnectionState
+    let batteryPercent: Int?
+
+    init(id: String, name: String, type: PeripheralType, state: ConnectionState, batteryPercent: Int? = nil) {
+        self.id = id
+        self.name = name
+        self.type = type
+        self.state = state
+        self.batteryPercent = batteryPercent
+    }
 }
