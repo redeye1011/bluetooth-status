@@ -1,0 +1,30 @@
+name: BluetoothStatus
+options:
+  bundleIdPrefix: com.thns
+settings:
+  base:
+    MACOSX_DEPLOYMENT_TARGET: 13.0
+    SWIFT_VERSION: 5.0
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+targets:
+  BluetoothStatus:
+    type: application
+    platform: macOS
+    sources: [BluetoothStatus]
+    info:
+      path: BluetoothStatus/Info.plist
+      properties:
+        CFBundleDisplayName: Bluetooth Status
+        LSUIElement: true
+        NSBluetoothAlwaysUsageDescription: Bluetooth Status checks the connection of your selected keyboard, mouse, and speaker.
+    dependencies:
+      - sdk: IOBluetooth.framework
+      - sdk: IOKit.framework
+      - sdk: CoreAudio.framework
+      - sdk: ServiceManagement.framework
+  BluetoothStatusTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [BluetoothStatusTests]
+    dependencies:
+      - target: BluetoothStatus
