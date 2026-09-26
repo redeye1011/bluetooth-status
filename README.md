@@ -1,5 +1,7 @@
 # Bluetooth Status
 
+<img src="BluetoothStatus/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png" alt="Bluetooth Status app icon" width="128">
+
 A small native macOS 13+ menu-bar app for a Bluetooth keyboard, mouse, and optional speaker. Each device has its own icon and connection state. The app has no Dock icon, daemon, network service, or reconnect action.
 
 ## Use
