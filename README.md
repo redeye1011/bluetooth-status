@@ -20,6 +20,12 @@ Icon families are SF Symbols, [A Solid](Design/MenuIconOptions/A-solid.png), [B 
 
 The app reads paired-device state at startup, reacts to Bluetooth connection events, rescans after wake, and reconciles every 30 seconds. HID and Core Audio changes can also trigger a scan. A process-held lock prevents a second instance from starting, even when the executable is launched directly.
 
+## Related open-source projects
+
+- [Status Trio](https://github.com/lingyired/status-trio) combines system status in one icon and offers a Bluetooth panel with paired-device connection states and battery levels.
+- [AirBattery](https://github.com/lihaoyun6/AirBattery) shows device battery levels in the status bar, Dock, or widgets, with per-device hiding.
+- [Barttery](https://github.com/yurastegny/barttery) shows battery levels for Apple and Logitech keyboards and mice, Bluetooth headphones, and BLE devices in one menu-bar app.
+
 ## Build and test
 
 Requirements: macOS 13 or newer, Xcode with the macOS SDK. Open `BluetoothStatus.xcodeproj` in Xcode, or use:
