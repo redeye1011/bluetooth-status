@@ -187,7 +187,8 @@ final class IOBluetoothTransport: NSObject, BluetoothTransport {
     }
 
     private func registerDisconnect(for device: IOBluetoothDevice) {
-        guard let address = device.addressString, disconnectNotifications[address] == nil else { return }
+        guard let address = device.addressString else { return }
+        disconnectNotifications[address]?.unregister()
         disconnectNotifications[address] = device.register(
             forDisconnectNotification: self,
             selector: #selector(deviceDisconnected(_:device:))

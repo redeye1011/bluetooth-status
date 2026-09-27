@@ -1,8 +1,56 @@
+import AppKit
 import XCTest
 @testable import BluetoothStatus
 
 @MainActor
 final class DeviceMonitorTests: XCTestCase {
+    func testRemovedDeviceReappearsWhenSameAddressReconnects() {
+        for type in PeripheralType.allCases {
+            let suite = UUID().uuidString
+            let defaults = UserDefaults(suiteName: suite)!
+            defer { defaults.removePersistentDomain(forName: suite) }
+            let preferences = PreferencesStore(defaults: defaults)
+            let address = "SAME-ADDRESS"
+            preferences.setAddress(address, for: type)
+            preferences.setHideWhenDisconnected(true, for: type)
+
+            let device = PairedDevice(id: address, name: type.displayName,
+                                      audioKind: type == .headphones ? .headphones : .speaker)
+            let bluetooth = FakeBluetoothTransport()
+            bluetooth.devices = [device]
+            bluetooth.connected = [address]
+            let status = StatusBarController()
+            let monitor = DeviceMonitor(preferences: preferences, bluetooth: bluetooth)
+            monitor.onChange = { state in
+                status.update(state)
+                status.setVisible(preferences.shouldShow(state.type, state: state.state), for: state.type)
+            }
+            let item: NSStatusItem
+            switch type {
+            case .keyboard: item = status.keyboardItem
+            case .mouse: item = status.mouseItem
+            case .speaker: item = status.speakerItem
+            case .headphones: item = status.headphonesItem
+            }
+
+            monitor.start()
+            XCTAssertTrue(item.isVisible, "\(type) should show when connected")
+            bluetooth.devices = []
+            bluetooth.connected = []
+            bluetooth.emit(address: nil)
+            XCTAssertEqual(status.state(for: type), .unavailable)
+            XCTAssertFalse(item.isVisible)
+            XCTAssertEqual(preferences.address(for: type), address)
+
+            bluetooth.devices = [device]
+            bluetooth.connected = [address]
+            bluetooth.emit(address: address)
+            XCTAssertEqual(status.state(for: type), .connected)
+            XCTAssertTrue(item.isVisible, "\(type) should return without reselecting")
+            monitor.stop()
+        }
+    }
+
     func testMouseConnectionEventChangesOnlyMouseState() {
         let suite = UUID().uuidString
         let defaults = UserDefaults(suiteName: suite)!
