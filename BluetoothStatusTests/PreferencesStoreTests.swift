@@ -38,6 +38,32 @@ final class PreferencesStoreTests: XCTestCase {
         XCTAssertTrue(first.isVisible(.speaker))
     }
 
+    func testHideWhenDisconnectedDefaultsOffAndPersistsPerDevice() {
+        let suite = UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let preferences = PreferencesStore(defaults: defaults)
+        for type in PeripheralType.allCases {
+            XCTAssertFalse(preferences.hidesWhenDisconnected(type))
+            XCTAssertTrue(preferences.shouldShow(type, state: .disconnected))
+        }
+
+        preferences.setHideWhenDisconnected(true, for: .speaker)
+        preferences.setHideWhenDisconnected(true, for: .mouse)
+        let reopened = PreferencesStore(defaults: defaults)
+        XCTAssertTrue(reopened.shouldShow(.keyboard, state: .disconnected))
+        for type in [PeripheralType.mouse, .speaker] {
+            XCTAssertTrue(reopened.hidesWhenDisconnected(type))
+            XCTAssertFalse(reopened.shouldShow(type, state: .disconnected))
+            XCTAssertFalse(reopened.shouldShow(type, state: .unavailable))
+            XCTAssertTrue(reopened.shouldShow(type, state: .connected))
+        }
+
+        reopened.setVisible(false, for: .speaker)
+        XCTAssertFalse(preferences.shouldShow(.speaker, state: .connected))
+    }
+
     func testAllIconsCanStayHiddenWithoutForcingInitialSetup() {
         let suite = UUID().uuidString
         let defaults = UserDefaults(suiteName: suite)!

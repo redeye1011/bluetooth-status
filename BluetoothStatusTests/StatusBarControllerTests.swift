@@ -57,6 +57,7 @@ final class StatusBarControllerTests: XCTestCase {
 
     func testHiddenItemKeepsStateAndCanBeShownAgain() {
         let status = StatusBarController()
+        XCTAssertTrue(status.hasVisibleItems)
         XCTAssertTrue(status.keyboardItem.isVisible)
         XCTAssertTrue(status.mouseItem.isVisible)
         XCTAssertTrue(status.speakerItem.isVisible)
@@ -67,10 +68,14 @@ final class StatusBarControllerTests: XCTestCase {
         XCTAssertTrue(status.mouseItem.isVisible)
 
         status.update(PeripheralState(id: "S", name: "JBL", type: .speaker, state: .disconnected))
+        XCTAssertEqual(status.state(for: .speaker), .disconnected)
         status.setVisible(true, for: .speaker)
         XCTAssertTrue(status.speakerItem.isVisible)
         XCTAssertEqual(status.speakerItem.button?.toolTip, "JBL — Disconnected")
         XCTAssertTrue(containsRed(status.speakerItem.button?.image))
+
+        for type in PeripheralType.allCases { status.setVisible(false, for: type) }
+        XCTAssertFalse(status.hasVisibleItems)
     }
 
     func testConnectedMenusShowBatteryForEveryGlyph() {

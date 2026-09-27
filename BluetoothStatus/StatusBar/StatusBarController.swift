@@ -72,6 +72,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         statusItem(for: type).isVisible = visible
     }
 
+    func state(for type: PeripheralType) -> ConnectionState {
+        lastStates[type]?.state ?? .unavailable
+    }
+
+    var hasVisibleItems: Bool {
+        PeripheralType.allCases.contains { statusItem(for: $0).isVisible }
+    }
+
     func menuWillOpen(_ menu: NSMenu) {
         onMenuOpen()
         if let item = menu.items.first(where: { $0.action == #selector(toggleLogin) }) {

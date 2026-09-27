@@ -10,7 +10,7 @@ Click any Bluetooth Status icon in the menu bar to see the selected device name 
 
 Click a connected icon to see the device's battery percentage in its menu when macOS reports it. Devices without a readable battery percentage show no battery row.
 
-In Settings, assign paired devices by Bluetooth address rather than by a name guess. The Audio slot shows an AirPods-shaped icon for headphones and a speaker icon for speakers. You can show or hide each of the three icons independently. If all are hidden, reopen Bluetooth Status from Spotlight or Finder to access Settings. Assignments remain saved when an icon is hidden. One icon family and one status style apply to all three devices.
+In Settings, assign paired devices by Bluetooth address rather than by a name guess. The Audio slot shows an AirPods-shaped icon for headphones and a speaker icon for speakers. You can show or hide each of the three icons independently, or choose to hide each one while its selected device is disconnected or unavailable. All three remain visible by default. If all are hidden, reopen Bluetooth Status from Spotlight or Finder to access Settings. Assignments remain saved when an icon is hidden. One icon family and one status style apply to all three devices.
 
 | Status style | Connected | Disconnected | Unavailable |
 | --- | --- | --- | --- |

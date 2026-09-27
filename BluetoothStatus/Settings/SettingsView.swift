@@ -7,6 +7,9 @@ struct SettingsView: View {
     @State private var keyboardVisible: Bool
     @State private var mouseVisible: Bool
     @State private var speakerVisible: Bool
+    @State private var keyboardHideWhenDisconnected: Bool
+    @State private var mouseHideWhenDisconnected: Bool
+    @State private var speakerHideWhenDisconnected: Bool
     @State private var indicatorStyle: IndicatorStyle
     @State private var iconFamily: IconFamily
     @State private var launchAtLogin: Bool
@@ -41,6 +44,9 @@ struct SettingsView: View {
         _keyboardVisible = State(initialValue: preferences.isVisible(.keyboard))
         _mouseVisible = State(initialValue: preferences.isVisible(.mouse))
         _speakerVisible = State(initialValue: preferences.isVisible(.speaker))
+        _keyboardHideWhenDisconnected = State(initialValue: preferences.hidesWhenDisconnected(.keyboard))
+        _mouseHideWhenDisconnected = State(initialValue: preferences.hidesWhenDisconnected(.mouse))
+        _speakerHideWhenDisconnected = State(initialValue: preferences.hidesWhenDisconnected(.speaker))
         _indicatorStyle = State(initialValue: preferences.style)
         _iconFamily = State(initialValue: preferences.iconFamily)
         _launchAtLogin = State(initialValue: loginItem.isRequested)
@@ -88,6 +94,13 @@ struct SettingsView: View {
                         Toggle("Keyboard", isOn: $keyboardVisible)
                         Toggle("Mouse", isOn: $mouseVisible)
                         Toggle("Audio", isOn: $speakerVisible)
+                    }
+                    .toggleStyle(.checkbox)
+                    Text("Hide when disconnected")
+                    HStack(spacing: 12) {
+                        Toggle("Keyboard", isOn: $keyboardHideWhenDisconnected)
+                        Toggle("Mouse", isOn: $mouseHideWhenDisconnected)
+                        Toggle("Audio", isOn: $speakerHideWhenDisconnected)
                     }
                     .toggleStyle(.checkbox)
                 }
@@ -160,6 +173,9 @@ struct SettingsView: View {
         preferences.setVisible(keyboardVisible, for: .keyboard)
         preferences.setVisible(mouseVisible, for: .mouse)
         preferences.setVisible(speakerVisible, for: .speaker)
+        preferences.setHideWhenDisconnected(keyboardHideWhenDisconnected, for: .keyboard)
+        preferences.setHideWhenDisconnected(mouseHideWhenDisconnected, for: .mouse)
+        preferences.setHideWhenDisconnected(speakerHideWhenDisconnected, for: .speaker)
         preferences.setStyle(indicatorStyle)
         preferences.setIconFamily(iconFamily)
         onSaved()

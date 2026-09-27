@@ -28,7 +28,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         status.isLoginEnabled = { [weak self] in self?.loginItem.isEnabled ?? false }
         status.loginNeedsApproval = { [weak self] in self?.loginItem.requiresApproval ?? false }
         status.onMenuOpen = { [weak self] in self?.monitor.reconcile() }
-        monitor.onChange = { [weak self] state in self?.status.update(state) }
+        monitor.onChange = { [weak self] state in
+            guard let self else { return }
+            self.status.update(state)
+            self.status.setVisible(self.preferences.shouldShow(state.type, state: state.state), for: state.type)
+        }
         monitor.start()
 
         if preferences.needsInitialSetup {
@@ -50,7 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var hasVisibleStatusItems: Bool {
-        PeripheralType.allCases.contains { preferences.isVisible($0) }
+        status.hasVisibleItems
     }
 
     private func showSettings() {
@@ -105,7 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func refreshStatusVisibility() {
         for type in PeripheralType.allCases {
-            status.setVisible(preferences.isVisible(type), for: type)
+            status.setVisible(preferences.shouldShow(type, state: status.state(for: type)), for: type)
         }
     }
 }

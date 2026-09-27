@@ -24,6 +24,18 @@ final class PreferencesStore {
         defaults.set(visible, forKey: visibilityKey(for: type))
     }
 
+    func hidesWhenDisconnected(_ type: PeripheralType) -> Bool {
+        defaults.bool(forKey: hideWhenDisconnectedKey(for: type))
+    }
+
+    func setHideWhenDisconnected(_ hide: Bool, for type: PeripheralType) {
+        defaults.set(hide, forKey: hideWhenDisconnectedKey(for: type))
+    }
+
+    func shouldShow(_ type: PeripheralType, state: ConnectionState) -> Bool {
+        isVisible(type) && (!hidesWhenDisconnected(type) || state == .connected)
+    }
+
     var style: IndicatorStyle {
         IndicatorStyle(rawValue: defaults.string(forKey: "indicatorStyle") ?? "") ?? .color
     }
@@ -57,6 +69,14 @@ final class PreferencesStore {
         case .keyboard: "keyboardVisible"
         case .mouse: "mouseVisible"
         case .speaker: "speakerVisible"
+        }
+    }
+
+    private func hideWhenDisconnectedKey(for type: PeripheralType) -> String {
+        switch type {
+        case .keyboard: "keyboardHideWhenDisconnected"
+        case .mouse: "mouseHideWhenDisconnected"
+        case .speaker: "speakerHideWhenDisconnected"
         }
     }
 }
