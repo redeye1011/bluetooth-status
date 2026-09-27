@@ -2,6 +2,7 @@ import AppKit
 
 @MainActor
 final class StatusBarController: NSObject, NSMenuDelegate {
+    let headphonesItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     let speakerItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     let mouseItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     let keyboardItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -70,6 +71,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         statusItem(for: type).isVisible = visible
     }
 
+    func state(for type: PeripheralType) -> ConnectionState {
+        lastStates[type]?.state ?? .unavailable
+    }
+
+    var hasVisibleItems: Bool {
+        PeripheralType.allCases.contains { statusItem(for: $0).isVisible }
+    }
+
     func menuWillOpen(_ menu: NSMenu) {
         onMenuOpen()
         if let item = menu.items.first(where: { $0.action == #selector(toggleLogin) }) {
@@ -83,6 +92,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         case .keyboard: keyboardItem
         case .mouse: mouseItem
         case .speaker: speakerItem
+        case .headphones: headphonesItem
         }
     }
 

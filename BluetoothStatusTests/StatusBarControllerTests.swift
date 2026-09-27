@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class StatusBarControllerTests: XCTestCase {
-    func testEveryGeneratedFamilyLoadsAllThreeGlyphs() {
+    func testEveryGeneratedFamilyLoadsAllFourGlyphs() {
         let status = StatusBarController()
         status.style = .color
         for type in PeripheralType.allCases {
@@ -18,6 +18,7 @@ final class StatusBarControllerTests: XCTestCase {
                 case .keyboard: item = status.keyboardItem
                 case .mouse: item = status.mouseItem
                 case .speaker: item = status.speakerItem
+                case .headphones: item = status.headphonesItem
                 }
                 let image = item.button?.image
                 XCTAssertTrue(containsGreen(image))
@@ -27,22 +28,58 @@ final class StatusBarControllerTests: XCTestCase {
         }
     }
 
+    func testHeadphonesHaveDistinctArtworkInEveryFamily() {
+        let status = StatusBarController()
+        for family in IconFamily.allCases {
+            status.iconFamily = family
+            let speaker = PeripheralState(id: "S", name: "JBL", type: .speaker, state: .connected)
+            let headphones = PeripheralState(id: "H", name: "AirPods", type: .headphones, state: .connected)
+            if family != .system {
+                XCTAssertNotNil(NSImage(named: NSImage.Name(family.assetName(for: .headphones))))
+            }
+            status.update(speaker)
+            let speakerImage = status.speakerItem.button?.image?.tiffRepresentation
+            status.update(headphones)
+            let headphonesImage = status.headphonesItem.button?.image?.tiffRepresentation
+            XCTAssertNotNil(headphonesImage)
+            XCTAssertNotEqual(speakerImage, headphonesImage)
+            XCTAssertEqual(speakerImage, status.speakerItem.button?.image?.tiffRepresentation)
+            XCTAssertTrue(containsGreen(status.headphonesItem.button?.image))
+            XCTAssertEqual(status.headphonesItem.button?.accessibilityLabel(), "Headphones: AirPods, Connected")
+            status.update(PeripheralState(id: "H", name: "AirPods", type: .headphones, state: .disconnected))
+            XCTAssertTrue(containsRed(status.headphonesItem.button?.image))
+            status.style = .shape
+            status.update(headphones)
+            let filled = status.headphonesItem.button?.image?.tiffRepresentation
+            status.update(PeripheralState(id: "H", name: "AirPods", type: .headphones, state: .disconnected))
+            XCTAssertNotEqual(filled, status.headphonesItem.button?.image?.tiffRepresentation)
+            status.style = .color
+        }
+    }
+
     func testHiddenItemKeepsStateAndCanBeShownAgain() {
         let status = StatusBarController()
+        XCTAssertTrue(status.hasVisibleItems)
         XCTAssertTrue(status.keyboardItem.isVisible)
         XCTAssertTrue(status.mouseItem.isVisible)
         XCTAssertTrue(status.speakerItem.isVisible)
+        XCTAssertTrue(status.headphonesItem.isVisible)
 
         status.setVisible(false, for: .speaker)
         XCTAssertFalse(status.speakerItem.isVisible)
         XCTAssertTrue(status.keyboardItem.isVisible)
         XCTAssertTrue(status.mouseItem.isVisible)
+        XCTAssertTrue(status.headphonesItem.isVisible)
 
         status.update(PeripheralState(id: "S", name: "JBL", type: .speaker, state: .disconnected))
+        XCTAssertEqual(status.state(for: .speaker), .disconnected)
         status.setVisible(true, for: .speaker)
         XCTAssertTrue(status.speakerItem.isVisible)
         XCTAssertEqual(status.speakerItem.button?.toolTip, "JBL — Disconnected")
         XCTAssertTrue(containsRed(status.speakerItem.button?.image))
+
+        for type in PeripheralType.allCases { status.setVisible(false, for: type) }
+        XCTAssertFalse(status.hasVisibleItems)
     }
 
     func testConnectedMenusShowBatteryForEveryGlyph() {
@@ -53,6 +90,7 @@ final class StatusBarControllerTests: XCTestCase {
             case .keyboard: item = status.keyboardItem
             case .mouse: item = status.mouseItem
             case .speaker: item = status.speakerItem
+            case .headphones: item = status.headphonesItem
             }
             status.update(PeripheralState(id: "A", name: type.displayName, type: type, state: .connected, batteryPercent: 82))
             XCTAssertEqual(item.menu?.items[2].title, "Battery 82%")
@@ -83,6 +121,7 @@ final class StatusBarControllerTests: XCTestCase {
         let status = StatusBarController()
         XCTAssertFalse(status.keyboardItem === status.mouseItem)
         XCTAssertFalse(status.keyboardItem === status.speakerItem)
+        XCTAssertFalse(status.speakerItem === status.headphonesItem)
 
         status.update(PeripheralState(id: "KEYBOARD", name: "Keychron K2", type: .keyboard, state: .connected))
         status.update(PeripheralState(id: "MOUSE", name: "MX Master 3S", type: .mouse, state: .disconnected))
@@ -117,6 +156,7 @@ final class StatusBarControllerTests: XCTestCase {
                 case .keyboard: item = status.keyboardItem
                 case .mouse: item = status.mouseItem
                 case .speaker: item = status.speakerItem
+                case .headphones: item = status.headphonesItem
                 }
                 for style in IndicatorStyle.allCases {
                     status.style = style
@@ -166,6 +206,7 @@ final class StatusBarControllerTests: XCTestCase {
             case .keyboard: item = status.keyboardItem
             case .mouse: item = status.mouseItem
             case .speaker: item = status.speakerItem
+            case .headphones: item = status.headphonesItem
             }
             status.update(PeripheralState(id: "A", name: type.displayName, type: type, state: .connected))
             let connectedBrightness = averageBrightness(item.button?.image)
@@ -173,6 +214,32 @@ final class StatusBarControllerTests: XCTestCase {
             let disconnectedBrightness = averageBrightness(item.button?.image)
             XCTAssertGreaterThan(connectedBrightness, disconnectedBrightness + 0.2)
         }
+    }
+
+    func testGeneratedOutlineFillUsesBackgroundFreeAssets() {
+        for family in [IconFamily.a, .b, .c] {
+            for type in PeripheralType.allCases {
+                let baseName = family.assetName(for: type)
+                for (state, suffix) in [(ConnectionState.connected, "Filled"), (.disconnected, "Outline")] {
+                    XCTAssertNotNil(NSImage(named: NSImage.Name(baseName + suffix)))
+                    let icon = StatusIcon.image(for: type, state: state, style: .shape,
+                                                family: family, name: type.displayName)
+                    XCTAssertLessThan(alpha(atX: 2, y: 3, in: icon), 0.1, "\(family) \(type) \(suffix) has no badge")
+                }
+            }
+        }
+    }
+
+    private func alpha(atX x: Int, y: Int, in image: NSImage?) -> CGFloat {
+        guard let image, let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 20, pixelsHigh: 18,
+                                                       bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+                                                       isPlanar: false, colorSpaceName: .deviceRGB,
+                                                       bytesPerRow: 0, bitsPerPixel: 0) else { return 0 }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
+        image.draw(in: NSRect(x: 0, y: 0, width: 20, height: 18))
+        NSGraphicsContext.restoreGraphicsState()
+        return bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0
     }
 
     private func containsGreen(_ image: NSImage?) -> Bool {

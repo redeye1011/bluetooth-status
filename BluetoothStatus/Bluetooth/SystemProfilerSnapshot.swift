@@ -20,7 +20,17 @@ struct SystemProfilerSnapshot {
             for group in bluetooth[key] as? [[String: [String: Any]]] ?? [] {
                 for (name, details) in group {
                     guard let address = details["device_address"] as? String else { continue }
-                    devices.append(PairedDevice(id: address, name: name.trimmingCharacters(in: .whitespaces)))
+                    let cleanName = name.trimmingCharacters(in: .whitespaces)
+                    let minorType = details["device_minorType"] as? String
+                    let inputDevice = ["keyboard", "mouse", "trackpad", "trackball"].contains {
+                        minorType?.localizedCaseInsensitiveContains($0) == true
+                    }
+                    devices.append(PairedDevice(
+                        id: address,
+                        name: cleanName,
+                        audioKind: AudioKind.identify(minorType: minorType, name: cleanName),
+                        isAudioCandidate: !inputDevice
+                    ))
                     if connected {
                         connectedAddresses.insert(address)
                         if let raw = details["device_batteryLevelMain"] as? String {

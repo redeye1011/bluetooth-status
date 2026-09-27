@@ -63,7 +63,9 @@ final class DeviceMonitor {
     }
 
     func pairedDevices() -> [PairedDevice] {
-        bluetooth.pairedDevices().sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        let devices = bluetooth.pairedDevices()
+        preferences.migrateLegacyHeadphones(using: devices)
+        return devices.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     func reconcile() {
@@ -71,7 +73,9 @@ final class DeviceMonitor {
     }
 
     func refresh(address: String? = nil) {
-        let paired = Dictionary(bluetooth.pairedDevices().map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let devices = bluetooth.pairedDevices()
+        preferences.migrateLegacyHeadphones(using: devices)
+        let paired = Dictionary(devices.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         for type in PeripheralType.allCases {
             let selected = preferences.address(for: type)
             if let address, normalized(address) != selected.map(normalized) { continue }
