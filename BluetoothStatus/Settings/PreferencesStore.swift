@@ -25,7 +25,9 @@ final class PreferencesStore {
     }
 
     func hidesWhenDisconnected(_ type: PeripheralType) -> Bool {
-        defaults.bool(forKey: hideWhenDisconnectedKey(for: type))
+        let key = hideWhenDisconnectedKey(for: type)
+        if defaults.object(forKey: key) == nil { return type == .speaker || type == .headphones }
+        return defaults.bool(forKey: key)
     }
 
     func setHideWhenDisconnected(_ hide: Bool, for type: PeripheralType) {
@@ -56,11 +58,28 @@ final class PreferencesStore {
         [.keyboard, .mouse].contains { isVisible($0) && address(for: $0) == nil }
     }
 
+    func migrateLegacyHeadphones(using devices: [PairedDevice]) {
+        guard let oldAddress = address(for: .speaker),
+              devices.contains(where: { $0.id == oldAddress && $0.audioKind == .headphones }) else { return }
+        if address(for: .headphones) == nil {
+            setAddress(oldAddress, for: .headphones)
+            for (oldKey, newKey) in [(visibilityKey(for: .speaker), visibilityKey(for: .headphones)),
+                                     (hideWhenDisconnectedKey(for: .speaker), hideWhenDisconnectedKey(for: .headphones))] {
+                if defaults.object(forKey: newKey) == nil, let value = defaults.object(forKey: oldKey) {
+                    defaults.set(value, forKey: newKey)
+                }
+                defaults.removeObject(forKey: oldKey)
+            }
+        }
+        setAddress(nil, for: .speaker)
+    }
+
     private func key(for type: PeripheralType) -> String {
         switch type {
         case .keyboard: "keyboardAddress"
         case .mouse: "mouseAddress"
         case .speaker: "speakerAddress"
+        case .headphones: "headphonesAddress"
         }
     }
 
@@ -69,6 +88,7 @@ final class PreferencesStore {
         case .keyboard: "keyboardVisible"
         case .mouse: "mouseVisible"
         case .speaker: "speakerVisible"
+        case .headphones: "headphonesVisible"
         }
     }
 
@@ -77,6 +97,7 @@ final class PreferencesStore {
         case .keyboard: "keyboardHideWhenDisconnected"
         case .mouse: "mouseHideWhenDisconnected"
         case .speaker: "speakerHideWhenDisconnected"
+        case .headphones: "headphonesHideWhenDisconnected"
         }
     }
 }

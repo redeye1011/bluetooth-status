@@ -21,10 +21,15 @@ struct SystemProfilerSnapshot {
                 for (name, details) in group {
                     guard let address = details["device_address"] as? String else { continue }
                     let cleanName = name.trimmingCharacters(in: .whitespaces)
+                    let minorType = details["device_minorType"] as? String
+                    let inputDevice = ["keyboard", "mouse", "trackpad", "trackball"].contains {
+                        minorType?.localizedCaseInsensitiveContains($0) == true
+                    }
                     devices.append(PairedDevice(
                         id: address,
                         name: cleanName,
-                        audioKind: AudioKind.identify(minorType: details["device_minorType"] as? String, name: cleanName)
+                        audioKind: AudioKind.identify(minorType: minorType, name: cleanName),
+                        isAudioCandidate: !inputDevice
                     ))
                     if connected {
                         connectedAddresses.insert(address)

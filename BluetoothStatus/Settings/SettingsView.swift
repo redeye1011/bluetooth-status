@@ -4,12 +4,15 @@ struct SettingsView: View {
     @State private var keyboardAddress: String
     @State private var mouseAddress: String
     @State private var speakerAddress: String
+    @State private var headphonesAddress: String
     @State private var keyboardVisible: Bool
     @State private var mouseVisible: Bool
     @State private var speakerVisible: Bool
+    @State private var headphonesVisible: Bool
     @State private var keyboardHideWhenDisconnected: Bool
     @State private var mouseHideWhenDisconnected: Bool
     @State private var speakerHideWhenDisconnected: Bool
+    @State private var headphonesHideWhenDisconnected: Bool
     @State private var indicatorStyle: IndicatorStyle
     @State private var iconFamily: IconFamily
     @State private var launchAtLogin: Bool
@@ -38,15 +41,19 @@ struct SettingsView: View {
         self.requestScan = requestScan
         self.onSaved = onSaved
         self.onDone = onDone
+        preferences.migrateLegacyHeadphones(using: devices)
         _keyboardAddress = State(initialValue: preferences.address(for: .keyboard) ?? "")
         _mouseAddress = State(initialValue: preferences.address(for: .mouse) ?? "")
         _speakerAddress = State(initialValue: preferences.address(for: .speaker) ?? "")
+        _headphonesAddress = State(initialValue: preferences.address(for: .headphones) ?? "")
         _keyboardVisible = State(initialValue: preferences.isVisible(.keyboard))
         _mouseVisible = State(initialValue: preferences.isVisible(.mouse))
         _speakerVisible = State(initialValue: preferences.isVisible(.speaker))
+        _headphonesVisible = State(initialValue: preferences.isVisible(.headphones))
         _keyboardHideWhenDisconnected = State(initialValue: preferences.hidesWhenDisconnected(.keyboard))
         _mouseHideWhenDisconnected = State(initialValue: preferences.hidesWhenDisconnected(.mouse))
         _speakerHideWhenDisconnected = State(initialValue: preferences.hidesWhenDisconnected(.speaker))
+        _headphonesHideWhenDisconnected = State(initialValue: preferences.hidesWhenDisconnected(.headphones))
         _indicatorStyle = State(initialValue: preferences.style)
         _iconFamily = State(initialValue: preferences.iconFamily)
         _launchAtLogin = State(initialValue: loginItem.isRequested)
@@ -79,10 +86,20 @@ struct SettingsView: View {
                     .labelsHidden()
                 }
                 HStack {
-                    Text("Audio").frame(width: 80, alignment: .trailing)
-                    Picker("Audio", selection: $speakerAddress) {
+                    Text("Speaker").frame(width: 90, alignment: .trailing)
+                    Picker("Speaker", selection: $speakerAddress) {
                         Text("Select a device").tag("")
-                        ForEach(devices) { device in
+                        ForEach(devices.filter { $0.isAudioCandidate && $0.audioKind == .speaker }) { device in
+                            Text(device.name).tag(device.id)
+                        }
+                    }
+                    .labelsHidden()
+                }
+                HStack {
+                    Text("Headphones").frame(width: 90, alignment: .trailing)
+                    Picker("Headphones", selection: $headphonesAddress) {
+                        Text("Select a device").tag("")
+                        ForEach(devices.filter { $0.isAudioCandidate && $0.audioKind == .headphones }) { device in
                             Text(device.name).tag(device.id)
                         }
                     }
@@ -93,17 +110,22 @@ struct SettingsView: View {
                     HStack(spacing: 12) {
                         Toggle("Keyboard", isOn: $keyboardVisible)
                         Toggle("Mouse", isOn: $mouseVisible)
-                        Toggle("Audio", isOn: $speakerVisible)
                     }
-                    .toggleStyle(.checkbox)
+                    HStack(spacing: 12) {
+                        Toggle("Speaker", isOn: $speakerVisible)
+                        Toggle("Headphones", isOn: $headphonesVisible)
+                    }
                     Text("Hide when disconnected")
                     HStack(spacing: 12) {
                         Toggle("Keyboard", isOn: $keyboardHideWhenDisconnected)
                         Toggle("Mouse", isOn: $mouseHideWhenDisconnected)
-                        Toggle("Audio", isOn: $speakerHideWhenDisconnected)
                     }
-                    .toggleStyle(.checkbox)
+                    HStack(spacing: 12) {
+                        Toggle("Speaker", isOn: $speakerHideWhenDisconnected)
+                        Toggle("Headphones", isOn: $headphonesHideWhenDisconnected)
+                    }
                 }
+                .toggleStyle(.checkbox)
                 HStack {
                     Text("Style").frame(width: 80, alignment: .trailing)
                     Picker("Style", selection: $indicatorStyle) {
@@ -129,8 +151,7 @@ struct SettingsView: View {
                                     state: .connected,
                                     style: indicatorStyle,
                                     family: iconFamily,
-                                    name: type.displayName,
-                                    audioKind: type == .speaker ? devices.first(where: { $0.id == speakerAddress })?.audioKind ?? .speaker : .speaker
+                                    name: type.displayName
                                 ) {
                                     Image(nsImage: preview)
                                         .resizable()
@@ -142,7 +163,7 @@ struct SettingsView: View {
                     }
                 }
                 Toggle("Launch at login", isOn: $launchAtLogin)
-                    .padding(.leading, 80)
+                    .padding(.leading, 90)
             }
 
             if let errorMessage {
@@ -159,23 +180,41 @@ struct SettingsView: View {
             }
         }
         .padding(20)
-        .frame(width: 390)
+        .frame(width: 420)
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
             let updated = refreshDevices()
-            if devices != updated { devices = updated }
+            if devices != updated {
+                devices = updated
+                syncMigratedAudioSelection()
+            }
         }
+    }
+
+    private func syncMigratedAudioSelection() {
+        guard !speakerAddress.isEmpty,
+              headphonesAddress.isEmpty,
+              preferences.address(for: .headphones) == speakerAddress else { return }
+        headphonesAddress = speakerAddress
+        speakerAddress = preferences.address(for: .speaker) ?? ""
+        speakerVisible = preferences.isVisible(.speaker)
+        headphonesVisible = preferences.isVisible(.headphones)
+        speakerHideWhenDisconnected = preferences.hidesWhenDisconnected(.speaker)
+        headphonesHideWhenDisconnected = preferences.hidesWhenDisconnected(.headphones)
     }
 
     private func save() {
         preferences.setAddress(keyboardAddress.isEmpty ? nil : keyboardAddress, for: .keyboard)
         preferences.setAddress(mouseAddress.isEmpty ? nil : mouseAddress, for: .mouse)
         preferences.setAddress(speakerAddress.isEmpty ? nil : speakerAddress, for: .speaker)
+        preferences.setAddress(headphonesAddress.isEmpty ? nil : headphonesAddress, for: .headphones)
         preferences.setVisible(keyboardVisible, for: .keyboard)
         preferences.setVisible(mouseVisible, for: .mouse)
         preferences.setVisible(speakerVisible, for: .speaker)
+        preferences.setVisible(headphonesVisible, for: .headphones)
         preferences.setHideWhenDisconnected(keyboardHideWhenDisconnected, for: .keyboard)
         preferences.setHideWhenDisconnected(mouseHideWhenDisconnected, for: .mouse)
         preferences.setHideWhenDisconnected(speakerHideWhenDisconnected, for: .speaker)
+        preferences.setHideWhenDisconnected(headphonesHideWhenDisconnected, for: .headphones)
         preferences.setStyle(indicatorStyle)
         preferences.setIconFamily(iconFamily)
         onSaved()

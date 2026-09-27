@@ -22,8 +22,8 @@ final class DeviceMonitorTests: XCTestCase {
         var changes: [PeripheralState] = []
         monitor.onChange = { changes.append($0) }
         monitor.start()
-        XCTAssertEqual(changes.map(\.state), [.connected, .disconnected, .unavailable])
-        XCTAssertEqual(changes.last?.name, "Speaker")
+        XCTAssertEqual(changes.map(\.state), [.connected, .disconnected, .unavailable, .unavailable])
+        XCTAssertEqual(changes.last?.name, "Headphones")
 
         changes.removeAll()
         bluetooth.connected.insert("MOUSE")
@@ -53,7 +53,7 @@ final class DeviceMonitorTests: XCTestCase {
         var changes: [PeripheralState] = []
         monitor.onChange = { changes.append($0) }
         monitor.start()
-        XCTAssertEqual(changes.last?.state, .disconnected)
+        XCTAssertEqual(changes.first(where: { $0.type == .speaker })?.state, .disconnected)
 
         changes.removeAll()
         bluetooth.connected.insert("SPEAKER")
@@ -62,7 +62,7 @@ final class DeviceMonitorTests: XCTestCase {
         monitor.stop()
     }
 
-    func testSelectedHeadphonesKeepTheirIconKindAcrossConnectionChanges() {
+    func testSelectedHeadphonesHaveIndependentStateAcrossConnectionChanges() {
         let suite = UUID().uuidString
         let defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -74,13 +74,54 @@ final class DeviceMonitorTests: XCTestCase {
         var changes: [PeripheralState] = []
         monitor.onChange = { changes.append($0) }
         monitor.start()
-        XCTAssertEqual(changes.last?.audioKind, .headphones)
+        XCTAssertNil(preferences.address(for: .speaker))
+        XCTAssertEqual(preferences.address(for: .headphones), "AIRPODS")
+        XCTAssertEqual(changes.last?.type, .headphones)
         XCTAssertEqual(changes.last?.state, .disconnected)
 
         bluetooth.connected.insert("AIRPODS")
         bluetooth.emit(address: "AIRPODS")
-        XCTAssertEqual(changes.last?.audioKind, .headphones)
+        XCTAssertEqual(changes.last?.type, .headphones)
         XCTAssertEqual(changes.last?.state, .connected)
+        monitor.stop()
+    }
+
+    func testSpeakerAndHeadphonesShowTogetherThenSwitchWithConnections() {
+        let suite = UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = PreferencesStore(defaults: defaults)
+        preferences.setAddress("SPEAKER", for: .speaker)
+        preferences.setAddress("AIRPODS", for: .headphones)
+        let bluetooth = FakeBluetoothTransport()
+        bluetooth.devices = [
+            PairedDevice(id: "SPEAKER", name: "JBL"),
+            PairedDevice(id: "AIRPODS", name: "AirPods", audioKind: .headphones)
+        ]
+        bluetooth.connected = ["SPEAKER", "AIRPODS"]
+
+        let monitor = DeviceMonitor(preferences: preferences, bluetooth: bluetooth)
+        var changes: [PeripheralState] = []
+        monitor.onChange = { changes.append($0) }
+        monitor.start()
+        XCTAssertEqual(changes.filter { $0.type == .speaker || $0.type == .headphones }.map(\.state), [.connected, .connected])
+        XCTAssertTrue(preferences.shouldShow(.speaker, state: .connected))
+        XCTAssertTrue(preferences.shouldShow(.headphones, state: .connected))
+
+        changes.removeAll()
+        bluetooth.connected.remove("AIRPODS")
+        bluetooth.emit(address: "AIRPODS")
+        XCTAssertEqual(changes, [PeripheralState(id: "AIRPODS", name: "AirPods", type: .headphones, state: .disconnected)])
+        XCTAssertTrue(preferences.shouldShow(.speaker, state: .connected))
+        XCTAssertFalse(preferences.shouldShow(.headphones, state: .disconnected))
+
+        changes.removeAll()
+        bluetooth.connected.insert("AIRPODS")
+        bluetooth.connected.remove("SPEAKER")
+        bluetooth.emit(address: nil)
+        XCTAssertEqual(changes.map(\.type), [.speaker, .headphones])
+        XCTAssertFalse(preferences.shouldShow(.speaker, state: .disconnected))
+        XCTAssertTrue(preferences.shouldShow(.headphones, state: .connected))
         monitor.stop()
     }
 

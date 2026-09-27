@@ -44,6 +44,8 @@ final class SystemProfilerSnapshotTests: XCTestCase {
         {"SPBluetoothDataType":[{
           "controller_properties":{"controller_state":"attrib_on"},
           "device_connected":[
+            {"Desk Keys":{"device_address":"K","device_minorType":"Keyboard"}},
+            {"Travel Mouse":{"device_address":"M","device_minorType":"Mouse"}},
             {"Living Room":{"device_address":"S","device_minorType":"Speaker"}},
             {"Studio Set":{"device_address":"H","device_minorType":"Headphones"}},
             {"Call Set":{"device_address":"C","device_minorType":"Headset"}},
@@ -52,6 +54,7 @@ final class SystemProfilerSnapshotTests: XCTestCase {
         }]}
         """
         let devices = try XCTUnwrap(SystemProfilerSnapshot.parse(Data(json.utf8))).devices
-        XCTAssertEqual(devices.map(\.audioKind), [.speaker, .headphones, .headphones, .headphones])
+        XCTAssertEqual(devices.map(\.audioKind), [.speaker, .speaker, .speaker, .headphones, .headphones, .headphones])
+        XCTAssertEqual(devices.map(\.isAudioCandidate), [false, false, true, true, true, true])
     }
 }

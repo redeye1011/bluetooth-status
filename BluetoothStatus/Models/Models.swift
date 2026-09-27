@@ -2,12 +2,14 @@ enum PeripheralType: CaseIterable {
     case keyboard
     case mouse
     case speaker
+    case headphones
 
     var displayName: String {
         switch self {
         case .keyboard: "Keyboard"
         case .mouse: "Mouse"
         case .speaker: "Speaker"
+        case .headphones: "Headphones"
         }
     }
 }
@@ -51,8 +53,8 @@ enum IconFamily: String, CaseIterable, Identifiable {
         }
     }
 
-    func assetName(for type: PeripheralType, audioKind: AudioKind = .speaker) -> String {
-        "Menu\(rawValue.uppercased())\(type == .speaker && audioKind == .headphones ? "Headphones" : type.displayName)"
+    func assetName(for type: PeripheralType) -> String {
+        "Menu\(rawValue.uppercased())\(type.displayName)"
     }
 }
 
@@ -76,11 +78,13 @@ struct PairedDevice: Equatable, Identifiable {
     let id: String
     let name: String
     let audioKind: AudioKind
+    let isAudioCandidate: Bool
 
-    init(id: String, name: String, audioKind: AudioKind = .speaker) {
+    init(id: String, name: String, audioKind: AudioKind = .speaker, isAudioCandidate: Bool = true) {
         self.id = id
         self.name = name
         self.audioKind = audioKind
+        self.isAudioCandidate = isAudioCandidate
     }
 }
 
@@ -90,14 +94,12 @@ struct PeripheralState: Equatable {
     let type: PeripheralType
     let state: ConnectionState
     let batteryPercent: Int?
-    let audioKind: AudioKind
 
-    init(id: String, name: String, type: PeripheralType, state: ConnectionState, batteryPercent: Int? = nil, audioKind: AudioKind = .speaker) {
+    init(id: String, name: String, type: PeripheralType, state: ConnectionState, batteryPercent: Int? = nil) {
         self.id = id
         self.name = name
         self.type = type
         self.state = state
         self.batteryPercent = batteryPercent
-        self.audioKind = audioKind
     }
 }
