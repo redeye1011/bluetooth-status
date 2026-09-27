@@ -197,22 +197,19 @@ final class StatusBarControllerTests: XCTestCase {
         }
     }
 
-    func testMonochromeBadgesUseWhiteForConnectedAndBlackForDisconnected() {
-        let status = StatusBarController()
-        status.style = .monochrome
-        for type in PeripheralType.allCases {
-            let item: NSStatusItem
-            switch type {
-            case .keyboard: item = status.keyboardItem
-            case .mouse: item = status.mouseItem
-            case .speaker: item = status.speakerItem
-            case .headphones: item = status.headphonesItem
+    func testMonochromeSquaresUseWhiteFillAndHollowOutline() {
+        for family in IconFamily.allCases {
+            for type in PeripheralType.allCases {
+                let connected = StatusIcon.image(for: type, state: .connected, style: .monochrome,
+                                                 family: family, name: type.displayName)
+                let disconnected = StatusIcon.image(for: type, state: .disconnected, style: .monochrome,
+                                                    family: family, name: type.displayName)
+                XCTAssertGreaterThan(averageBrightness(connected), 0.5)
+                XCTAssertLessThan(alpha(atX: 0, y: 0, in: connected), alpha(atX: 10, y: 1, in: connected))
+                XCTAssertLessThan(alpha(atX: 0, y: 0, in: disconnected), alpha(atX: 10, y: 1, in: disconnected))
+                XCTAssertGreaterThan(opaquePixelCount(connected), 220)
+                XCTAssertGreaterThan(opaquePixelCount(connected), opaquePixelCount(disconnected) + 30)
             }
-            status.update(PeripheralState(id: "A", name: type.displayName, type: type, state: .connected))
-            let connectedBrightness = averageBrightness(item.button?.image)
-            status.update(PeripheralState(id: "A", name: type.displayName, type: type, state: .disconnected))
-            let disconnectedBrightness = averageBrightness(item.button?.image)
-            XCTAssertGreaterThan(connectedBrightness, disconnectedBrightness + 0.2)
         }
     }
 
@@ -259,6 +256,17 @@ final class StatusBarControllerTests: XCTestCase {
             }
         }
         return false
+    }
+
+    private func opaquePixelCount(_ image: NSImage?) -> Int {
+        guard let data = image?.tiffRepresentation, let bitmap = NSBitmapImageRep(data: data) else { return 0 }
+        var count = 0
+        for y in 0..<bitmap.pixelsHigh {
+            for x in 0..<bitmap.pixelsWide {
+                if (bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.5 { count += 1 }
+            }
+        }
+        return count
     }
 
     private func averageBrightness(_ image: NSImage?) -> Double {

@@ -15,7 +15,7 @@ In Settings, assign paired devices by Bluetooth address rather than by a name gu
 | Status style | Connected | Disconnected | Unavailable |
 | --- | --- | --- | --- |
 | Outline / Fill | filled | outlined | gray |
-| Black / White | white badge | black badge | gray |
+| Monochrome Squares | white filled rounded square | hollow rounded square | gray |
 | Red / Green | green | red | gray |
 
 Icon families are SF Symbols, [Solid](Design/MenuIconOptions/A-solid.png), [Outline](Design/MenuIconOptions/B-outline.png), and [Rounded](Design/MenuIconOptions/C-rounded.png). The selected app-icon artwork is in [Design/AppIcon](Design/AppIcon).
