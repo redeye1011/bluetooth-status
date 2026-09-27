@@ -4,23 +4,40 @@
 
 A small native macOS 13+ menu-bar app for a Bluetooth keyboard, mouse, speaker, and headphones. Each selected device has its own icon and connection state. The app has no Dock icon, daemon, network service, or reconnect action.
 
+## Screenshots
+
+<img src="Screenshots/settings-illustrative.png" alt="Illustrative Bluetooth Status Settings window" width="320">
+<img src="Screenshots/styles-illustrative.png" alt="Illustrative Settings window with style choices open" width="320">
+
+These illustrative images use generic device names.
+
+## Install
+
+Download the latest macOS arm64 DMG or ZIP from [Releases](https://github.com/redeye1011/bluetooth-status/releases/latest). The app requires macOS 13 or newer and Apple Silicon. Copy `BluetoothStatus.app` to `/Applications` before enabling Launch at Login.
+
 ## Use
 
 Click any Bluetooth Status icon in the menu bar to see the selected device name and status, open Settings, toggle Launch at Login, or quit. Device names and status text remain readable in the dark menu.
 
 Click a connected icon to see the device's battery percentage in its menu when macOS reports it. Devices without a readable battery percentage show no battery row.
 
-In Settings, assign paired devices by Bluetooth address rather than by a name guess. Speaker and Headphones have separate pickers and icons. Connected audio devices appear automatically: both icons show when both are connected, and each disappears when its device disconnects. You can override visibility and disconnection behavior per device. Keyboard and mouse remain visible by default. If all icons are hidden, reopen Bluetooth Status from Spotlight or Finder to access Settings. Assignments remain saved when an icon is hidden. One icon family and one status style apply to all four devices.
+In Settings, assign paired devices by Bluetooth address rather than by a name guess. Speaker and Headphones have separate pickers and icons. Connected audio devices appear automatically: both icons show when both are connected, and each disappears when its device disconnects. You can override visibility and disconnection behavior per device. Keyboard and mouse remain visible by default. Open Bluetooth Status from Applications or Spotlight to show Settings, even if macOS hides its menu-bar icons. Settings also has a Quit button. Assignments remain saved when an icon is hidden or its device is removed; the icon returns if that address reconnects. If re-pairing gives the device a new address, select it again. One icon family and one status style apply to all four devices.
 
 | Status style | Connected | Disconnected | Unavailable |
 | --- | --- | --- | --- |
 | Outline / Fill | filled | outlined | gray |
-| Black / White | white badge | black badge | gray |
+| Monochrome Squares | white filled rounded square | hollow rounded square | gray |
 | Red / Green | green | red | gray |
 
 Icon families are SF Symbols, [Solid](Design/MenuIconOptions/A-solid.png), [Outline](Design/MenuIconOptions/B-outline.png), and [Rounded](Design/MenuIconOptions/C-rounded.png). The selected app-icon artwork is in [Design/AppIcon](Design/AppIcon).
 
 The app reads paired-device state at startup, reacts to Bluetooth connection events, rescans after wake, and reconciles every 30 seconds. HID and Core Audio changes can also trigger a scan. A process-held lock prevents a second instance from starting, even when the executable is launched directly.
+
+## Performance snapshot
+
+Measured on September 27, 2026, using the installed Release app on an Apple silicon MacBook Air with 16 GiB RAM and macOS 27.0, with Settings open. Over 90 seconds, CPU averaged 0.04% of one core and peaked at 1% in a sampled one-second interval. Physical memory footprint was 40–43 MiB; RSS stayed near 119 MiB, including shared mappings. A manual device refresh used 0.06 CPU seconds over 12 seconds. One separate `system_profiler SPBluetoothDataType -json` run took 0.05 seconds and peaked at 6.3 MiB RSS.
+
+These are observations from one Mac, not a startup benchmark or a long-term memory-leak test.
 
 ## Build and test
 

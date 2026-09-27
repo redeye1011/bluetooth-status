@@ -30,7 +30,7 @@ enum IndicatorStyle: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .shape: "Outline / Fill"
-        case .monochrome: "Black / White"
+        case .monochrome: "Monochrome Squares"
         case .color: "Red / Green"
         }
     }

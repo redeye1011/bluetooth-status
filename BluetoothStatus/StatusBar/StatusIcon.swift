@@ -16,7 +16,7 @@ enum StatusIcon {
             symbol = systemSymbol
         } else {
             let baseName = family.assetName(for: type)
-            let suffix = style == .shape && state != .unavailable ? (state == .connected ? "Filled" : "Outline") : ""
+            let suffix = style != .color && state != .unavailable ? (state == .connected ? "Filled" : "Outline") : ""
             guard let generated = NSImage(named: NSImage.Name(baseName + suffix)) else { return nil }
             symbol = generated
         }
@@ -27,7 +27,7 @@ enum StatusIcon {
         case .shape:
             iconColor = state == .unavailable ? .systemGray : .labelColor
         case .monochrome:
-            iconColor = state == .unavailable ? .systemGray : (state == .connected ? .black : .white)
+            iconColor = state == .unavailable ? .systemGray : (state == .connected ? .black : .labelColor)
         case .color:
             switch state {
             case .connected: iconColor = .systemGreen
@@ -68,11 +68,16 @@ enum StatusIcon {
 
         guard style == .monochrome, state != .unavailable else { return glyph }
         let badge = NSImage(size: size, flipped: false) { rect in
-            let path = NSBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1))
-            (state == .connected ? NSColor.white : NSColor.black).setFill()
-            path.fill()
-            NSColor.separatorColor.setStroke()
-            path.lineWidth = 1
+            let path = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 4, yRadius: 4)
+            if state == .connected {
+                NSColor.white.setFill()
+                path.fill()
+                NSColor.separatorColor.setStroke()
+                path.lineWidth = 1
+            } else {
+                NSColor.labelColor.setStroke()
+                path.lineWidth = 1.5
+            }
             path.stroke()
             glyph.draw(in: rect)
             return true
