@@ -9,7 +9,7 @@ enum StatusIcon {
             case .keyboard: symbolName = state == .connected ? "keyboard.fill" : "keyboard"
             case .mouse: symbolName = state == .connected ? "computermouse.fill" : "computermouse"
             case .speaker:
-                symbolName = audioKind == .headphones ? "airpodspro" : (state == .connected ? "speaker.wave.2.fill" : "speaker.slash")
+                symbolName = audioKind == .headphones ? "airpods" : (state == .connected ? "speaker.wave.2.fill" : "speaker.slash")
             }
             guard let systemSymbol = NSImage(systemSymbolName: symbolName, accessibilityDescription: name)?
                 .withSymbolConfiguration(.init(pointSize: 16, weight: .semibold)) else { return nil }
@@ -36,10 +36,12 @@ enum StatusIcon {
         }
 
         let glyph = NSImage(size: size, flipped: false) { rect in
-            let scale = min((shapeBadge ? 13 : 17) / symbol.size.width, (shapeBadge ? 11 : 15) / symbol.size.height)
+            let scale = min((shapeBadge ? 16 : 17) / symbol.size.width, (shapeBadge ? 14 : 15) / symbol.size.height)
             let width = symbol.size.width * scale
             let height = symbol.size.height * scale
-            symbol.draw(in: NSRect(x: (rect.width - width) / 2, y: (rect.height - height) / 2, width: width, height: height))
+            let symbolRect = NSRect(x: (rect.width - width) / 2, y: (rect.height - height) / 2, width: width, height: height)
+            symbol.draw(in: symbolRect)
+            if shapeBadge { symbol.draw(in: symbolRect) }
             iconColor.setFill()
             rect.fill(using: .sourceAtop)
             return true
