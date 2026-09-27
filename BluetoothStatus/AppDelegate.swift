@@ -1,4 +1,5 @@
 import AppKit
+import Carbon
 import SwiftUI
 
 @MainActor
@@ -10,6 +11,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var status = StatusBarController()
     private var settingsWindow: NSWindow?
     private var instanceLock: SingleInstanceLock?
+    private var openSettingsAtLaunch = false
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleOpenApplication(_:withReplyEvent:)),
+            forEventClass: AEEventClass(kCoreEventClass),
+            andEventID: AEEventID(kAEOpenApplication)
+        )
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }
@@ -35,7 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         monitor.start()
 
-        if preferences.needsInitialSetup {
+        if openSettingsAtLaunch || preferences.needsInitialSetup {
             showSettings()
         }
     }
@@ -49,8 +60,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        if instanceLock != nil && !hasVisibleStatusItems { showSettings() }
+        if instanceLock != nil { showSettings() }
         return false
+    }
+
+    @objc private func handleOpenApplication(_ event: NSAppleEventDescriptor, withReplyEvent reply: NSAppleEventDescriptor) {
+        let reason = event.paramDescriptor(forKeyword: keyAEPropData)?.typeCodeValue
+        if reason == keyAELaunchedAsLogInItem || reason == keyAELaunchedAsServiceItem { return }
+        if instanceLock != nil { showSettings() }
+        else { openSettingsAtLaunch = true }
     }
 
     private var hasVisibleStatusItems: Bool {
@@ -80,7 +98,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onDone: { [weak self] in
                 self?.settingsWindow?.close()
                 self?.settingsWindow = nil
-            }
+            },
+            onQuit: { NSApp.terminate(nil) }
         )
         let window = NSWindow(contentViewController: NSHostingController(rootView: view))
         window.title = "Bluetooth Status"

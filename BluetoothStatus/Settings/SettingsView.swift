@@ -25,6 +25,7 @@ struct SettingsView: View {
     let requestScan: () -> Void
     let onSaved: () -> Void
     let onDone: () -> Void
+    let onQuit: () -> Void
 
     init(
         preferences: PreferencesStore,
@@ -33,7 +34,8 @@ struct SettingsView: View {
         refreshDevices: @escaping () -> [PairedDevice],
         requestScan: @escaping () -> Void,
         onSaved: @escaping () -> Void,
-        onDone: @escaping () -> Void
+        onDone: @escaping () -> Void,
+        onQuit: @escaping () -> Void
     ) {
         self.preferences = preferences
         self.loginItem = loginItem
@@ -41,6 +43,7 @@ struct SettingsView: View {
         self.requestScan = requestScan
         self.onSaved = onSaved
         self.onDone = onDone
+        self.onQuit = onQuit
         preferences.migrateLegacyHeadphones(using: devices)
         _keyboardAddress = State(initialValue: preferences.address(for: .keyboard) ?? "")
         _mouseAddress = State(initialValue: preferences.address(for: .mouse) ?? "")
@@ -175,6 +178,7 @@ struct SettingsView: View {
 
             HStack {
                 Button("Refresh Devices") { requestScan() }
+                Button("Quit Bluetooth Status", action: onQuit)
                 Spacer()
                 Button("Done", action: save).keyboardShortcut(.defaultAction)
             }

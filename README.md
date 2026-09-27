@@ -10,7 +10,7 @@ Click any Bluetooth Status icon in the menu bar to see the selected device name 
 
 Click a connected icon to see the device's battery percentage in its menu when macOS reports it. Devices without a readable battery percentage show no battery row.
 
-In Settings, assign paired devices by Bluetooth address rather than by a name guess. Speaker and Headphones have separate pickers and icons. Connected audio devices appear automatically: both icons show when both are connected, and each disappears when its device disconnects. You can override visibility and disconnection behavior per device. Keyboard and mouse remain visible by default. If all icons are hidden, reopen Bluetooth Status from Spotlight or Finder to access Settings. Assignments remain saved when an icon is hidden. One icon family and one status style apply to all four devices.
+In Settings, assign paired devices by Bluetooth address rather than by a name guess. Speaker and Headphones have separate pickers and icons. Connected audio devices appear automatically: both icons show when both are connected, and each disappears when its device disconnects. You can override visibility and disconnection behavior per device. Keyboard and mouse remain visible by default. Open Bluetooth Status from Applications or Spotlight to show Settings, even if macOS hides its menu-bar icons. Settings also has a Quit button. Assignments remain saved when an icon is hidden. One icon family and one status style apply to all four devices.
 
 | Status style | Connected | Disconnected | Unavailable |
 | --- | --- | --- | --- |
