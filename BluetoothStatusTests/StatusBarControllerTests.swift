@@ -208,16 +208,19 @@ final class StatusBarControllerTests: XCTestCase {
         }
     }
 
-    func testGeneratedOutlineFillAndBlackWhiteUseDifferentBadgeShapes() {
+    func testGeneratedOutlineFillUsesBackgroundFreeAssets() {
         let devices: [(PeripheralType, AudioKind)] = [
             (.keyboard, .speaker), (.mouse, .speaker), (.speaker, .speaker), (.speaker, .headphones)
         ]
         for family in [IconFamily.a, .b, .c] {
             for (type, audioKind) in devices {
-                let outlined = StatusIcon.image(for: type, state: .connected, style: .shape, family: family, name: type.displayName, audioKind: audioKind)
-                let monochrome = StatusIcon.image(for: type, state: .connected, style: .monochrome, family: family, name: type.displayName, audioKind: audioKind)
-                XCTAssertGreaterThan(alpha(atX: 2, y: 3, in: outlined), 0.5, "\(family) \(type) square badge")
-                XCTAssertLessThan(alpha(atX: 2, y: 3, in: monochrome), 0.1, "\(family) \(type) circular badge")
+                let baseName = family.assetName(for: type, audioKind: audioKind)
+                for (state, suffix) in [(ConnectionState.connected, "Filled"), (.disconnected, "Outline")] {
+                    XCTAssertNotNil(NSImage(named: NSImage.Name(baseName + suffix)))
+                    let icon = StatusIcon.image(for: type, state: state, style: .shape,
+                                                family: family, name: type.displayName, audioKind: audioKind)
+                    XCTAssertLessThan(alpha(atX: 2, y: 3, in: icon), 0.1, "\(family) \(type) \(suffix) has no badge")
+                }
             }
         }
     }

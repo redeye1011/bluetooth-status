@@ -9,22 +9,23 @@ enum StatusIcon {
             case .keyboard: symbolName = state == .connected ? "keyboard.fill" : "keyboard"
             case .mouse: symbolName = state == .connected ? "computermouse.fill" : "computermouse"
             case .speaker:
-                symbolName = audioKind == .headphones ? "airpods" : (state == .connected ? "speaker.wave.2.fill" : "speaker.slash")
+                symbolName = audioKind == .headphones ? "earbuds" : (state == .connected ? "speaker.wave.2.fill" : "speaker.slash")
             }
             guard let systemSymbol = NSImage(systemSymbolName: symbolName, accessibilityDescription: name)?
                 .withSymbolConfiguration(.init(pointSize: 16, weight: .semibold)) else { return nil }
             symbol = systemSymbol
         } else {
-            guard let generated = NSImage(named: NSImage.Name(family.assetName(for: type, audioKind: audioKind))) else { return nil }
+            let baseName = family.assetName(for: type, audioKind: audioKind)
+            let suffix = style == .shape && state != .unavailable ? (state == .connected ? "Filled" : "Outline") : ""
+            guard let generated = NSImage(named: NSImage.Name(baseName + suffix)) else { return nil }
             symbol = generated
         }
 
         let size = NSSize(width: 20, height: 18)
-        let shapeBadge = style == .shape && (family != .system || (type == .speaker && audioKind == .headphones)) && state != .unavailable
         let iconColor: NSColor
         switch style {
         case .shape:
-            iconColor = state == .unavailable ? .systemGray : (shapeBadge && state == .connected ? .windowBackgroundColor : .labelColor)
+            iconColor = state == .unavailable ? .systemGray : .labelColor
         case .monochrome:
             iconColor = state == .unavailable ? .systemGray : (state == .connected ? .black : .white)
         case .color:
@@ -36,37 +37,34 @@ enum StatusIcon {
         }
 
         let glyph = NSImage(size: size, flipped: false) { rect in
-            let maxWidth: CGFloat = style == .monochrome ? 14 : (shapeBadge ? 16 : 17)
-            let maxHeight: CGFloat = style == .monochrome ? 12 : (shapeBadge ? 14 : 15)
+            let maxWidth: CGFloat = style == .monochrome ? 14 : (style == .shape ? 18 : 17)
+            let maxHeight: CGFloat = style == .monochrome ? 12 : (style == .shape ? 16 : 15)
             let scale = min(maxWidth / symbol.size.width, maxHeight / symbol.size.height)
             let width = symbol.size.width * scale
             let height = symbol.size.height * scale
             let symbolRect = NSRect(x: (rect.width - width) / 2, y: (rect.height - height) / 2, width: width, height: height)
             symbol.draw(in: symbolRect)
-            if shapeBadge { symbol.draw(in: symbolRect) }
+            if family == .system && type == .speaker && audioKind == .headphones && style == .shape {
+                symbol.draw(in: symbolRect)
+            }
             iconColor.setFill()
             rect.fill(using: .sourceAtop)
+            if family == .system && type == .speaker && audioKind == .headphones && style == .shape && state == .disconnected {
+                let slash = NSBezierPath()
+                slash.move(to: NSPoint(x: 3, y: 3))
+                slash.line(to: NSPoint(x: 17, y: 15))
+                NSGraphicsContext.saveGraphicsState()
+                NSGraphicsContext.current?.compositingOperation = .clear
+                slash.lineWidth = 3
+                slash.stroke()
+                NSGraphicsContext.restoreGraphicsState()
+                NSColor.labelColor.setStroke()
+                slash.lineWidth = 1.5
+                slash.stroke()
+            }
             return true
         }
         glyph.isTemplate = false
-
-        if shapeBadge {
-            let badge = NSImage(size: size, flipped: false) { rect in
-                let path = NSBezierPath(roundedRect: rect.insetBy(dx: 1, dy: 1), xRadius: 4, yRadius: 4)
-                if state == .connected {
-                    NSColor.labelColor.setFill()
-                    path.fill()
-                } else {
-                    NSColor.labelColor.setStroke()
-                    path.lineWidth = 1.5
-                    path.stroke()
-                }
-                glyph.draw(in: rect)
-                return true
-            }
-            badge.isTemplate = false
-            return badge
-        }
 
         guard style == .monochrome, state != .unavailable else { return glyph }
         let badge = NSImage(size: size, flipped: false) { rect in
