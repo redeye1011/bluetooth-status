@@ -4,6 +4,17 @@
 
 A small native macOS 13+ menu-bar app for a Bluetooth keyboard, mouse, speaker, and headphones. Each selected device has its own icon and connection state. The app has no Dock icon, daemon, network service, or reconnect action.
 
+## Screenshots
+
+<img src="Screenshots/settings-illustrative.png" alt="Illustrative Bluetooth Status Settings window" width="320">
+<img src="Screenshots/styles-illustrative.png" alt="Illustrative Settings window with style choices open" width="320">
+
+These illustrative images use generic device names.
+
+## Install
+
+Download the latest macOS arm64 DMG or ZIP from [Releases](https://github.com/redeye1011/bluetooth-status/releases/latest). The app requires macOS 13 or newer and Apple Silicon. Copy `BluetoothStatus.app` to `/Applications` before enabling Launch at Login.
+
 ## Use
 
 Click any Bluetooth Status icon in the menu bar to see the selected device name and status, open Settings, toggle Launch at Login, or quit. Device names and status text remain readable in the dark menu.
