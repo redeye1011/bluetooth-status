@@ -22,6 +22,12 @@ Icon families are SF Symbols, [Solid](Design/MenuIconOptions/A-solid.png), [Outl
 
 The app reads paired-device state at startup, reacts to Bluetooth connection events, rescans after wake, and reconciles every 30 seconds. HID and Core Audio changes can also trigger a scan. A process-held lock prevents a second instance from starting, even when the executable is launched directly.
 
+## Performance snapshot
+
+Measured on September 27, 2026, using the installed Release app on an Apple silicon MacBook Air with 16 GiB RAM and macOS 27.0, with Settings open. Over 90 seconds, CPU averaged 0.04% of one core and peaked at 1% in a sampled one-second interval. Physical memory footprint was 40–43 MiB; RSS stayed near 119 MiB, including shared mappings. A manual device refresh used 0.06 CPU seconds over 12 seconds. One separate `system_profiler SPBluetoothDataType -json` run took 0.05 seconds and peaked at 6.3 MiB RSS.
+
+These are observations from one Mac, not a startup benchmark or a long-term memory-leak test.
+
 ## Build and test
 
 Requirements: macOS 13 or newer, Xcode with the macOS SDK. Open `BluetoothStatus.xcodeproj` in Xcode, or use:
