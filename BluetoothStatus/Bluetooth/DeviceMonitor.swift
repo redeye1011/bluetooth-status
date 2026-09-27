@@ -89,7 +89,8 @@ final class DeviceMonitor {
                 name: device?.name ?? type.displayName,
                 type: type,
                 state: state,
-                batteryPercent: state == .connected ? device.flatMap { bluetooth.batteryPercent(address: $0.id) } : nil
+                batteryPercent: state == .connected ? device.flatMap { bluetooth.batteryPercent(address: $0.id) } : nil,
+                audioKind: device?.audioKind ?? .speaker
             )
             if state == .connected, let device {
                 bluetooth.requestBattery(address: device.id, force: lastStates[type]?.state != .connected)

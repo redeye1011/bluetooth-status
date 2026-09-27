@@ -27,6 +27,34 @@ final class StatusBarControllerTests: XCTestCase {
         }
     }
 
+    func testHeadphonesHaveDistinctArtworkInEveryFamily() {
+        let status = StatusBarController()
+        for family in IconFamily.allCases {
+            status.iconFamily = family
+            let speaker = PeripheralState(id: "S", name: "JBL", type: .speaker, state: .connected)
+            let headphones = PeripheralState(id: "H", name: "AirPods", type: .speaker, state: .connected, audioKind: .headphones)
+            if family != .system {
+                XCTAssertNotNil(NSImage(named: NSImage.Name(family.assetName(for: .speaker, audioKind: .headphones))))
+            }
+            status.update(speaker)
+            let speakerImage = status.speakerItem.button?.image?.tiffRepresentation
+            status.update(headphones)
+            let headphonesImage = status.speakerItem.button?.image?.tiffRepresentation
+            XCTAssertNotNil(headphonesImage)
+            XCTAssertNotEqual(speakerImage, headphonesImage)
+            XCTAssertTrue(containsGreen(status.speakerItem.button?.image))
+            XCTAssertEqual(status.speakerItem.button?.accessibilityLabel(), "Headphones: AirPods, Connected")
+            status.update(PeripheralState(id: "H", name: "AirPods", type: .speaker, state: .disconnected, audioKind: .headphones))
+            XCTAssertTrue(containsRed(status.speakerItem.button?.image))
+            status.style = .shape
+            status.update(headphones)
+            let filled = status.speakerItem.button?.image?.tiffRepresentation
+            status.update(PeripheralState(id: "H", name: "AirPods", type: .speaker, state: .disconnected, audioKind: .headphones))
+            XCTAssertNotEqual(filled, status.speakerItem.button?.image?.tiffRepresentation)
+            status.style = .color
+        }
+    }
+
     func testHiddenItemKeepsStateAndCanBeShownAgain() {
         let status = StatusBarController()
         XCTAssertTrue(status.keyboardItem.isVisible)

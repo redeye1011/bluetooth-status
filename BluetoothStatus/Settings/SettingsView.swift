@@ -73,8 +73,8 @@ struct SettingsView: View {
                     .labelsHidden()
                 }
                 HStack {
-                    Text("Speaker").frame(width: 80, alignment: .trailing)
-                    Picker("Speaker", selection: $speakerAddress) {
+                    Text("Audio").frame(width: 80, alignment: .trailing)
+                    Picker("Audio", selection: $speakerAddress) {
                         Text("Select a device").tag("")
                         ForEach(devices) { device in
                             Text(device.name).tag(device.id)
@@ -87,7 +87,7 @@ struct SettingsView: View {
                     HStack(spacing: 12) {
                         Toggle("Keyboard", isOn: $keyboardVisible)
                         Toggle("Mouse", isOn: $mouseVisible)
-                        Toggle("Speaker", isOn: $speakerVisible)
+                        Toggle("Audio", isOn: $speakerVisible)
                     }
                     .toggleStyle(.checkbox)
                 }
@@ -116,7 +116,8 @@ struct SettingsView: View {
                                     state: .connected,
                                     style: indicatorStyle,
                                     family: iconFamily,
-                                    name: type.displayName
+                                    name: type.displayName,
+                                    audioKind: type == .speaker ? devices.first(where: { $0.id == speakerAddress })?.audioKind ?? .speaker : .speaker
                                 ) {
                                     Image(nsImage: preview)
                                         .resizable()

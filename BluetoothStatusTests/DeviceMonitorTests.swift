@@ -62,6 +62,28 @@ final class DeviceMonitorTests: XCTestCase {
         monitor.stop()
     }
 
+    func testSelectedHeadphonesKeepTheirIconKindAcrossConnectionChanges() {
+        let suite = UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = PreferencesStore(defaults: defaults)
+        preferences.setAddress("AIRPODS", for: .speaker)
+        let bluetooth = FakeBluetoothTransport()
+        bluetooth.devices = [PairedDevice(id: "AIRPODS", name: "AirPods Pro", audioKind: .headphones)]
+        let monitor = DeviceMonitor(preferences: preferences, bluetooth: bluetooth)
+        var changes: [PeripheralState] = []
+        monitor.onChange = { changes.append($0) }
+        monitor.start()
+        XCTAssertEqual(changes.last?.audioKind, .headphones)
+        XCTAssertEqual(changes.last?.state, .disconnected)
+
+        bluetooth.connected.insert("AIRPODS")
+        bluetooth.emit(address: "AIRPODS")
+        XCTAssertEqual(changes.last?.audioKind, .headphones)
+        XCTAssertEqual(changes.last?.state, .connected)
+        monitor.stop()
+    }
+
     func testBatteryChangesUpdateOnlySelectedConnectedDevice() {
         let suite = UUID().uuidString
         let defaults = UserDefaults(suiteName: suite)!

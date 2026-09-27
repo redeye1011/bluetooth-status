@@ -39,13 +39,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             state: peripheral.state,
             style: style,
             family: iconFamily,
-            name: peripheral.name
+            name: peripheral.name,
+            audioKind: peripheral.audioKind
         )
         item.button?.imageScaling = .scaleProportionallyDown
         item.button?.contentTintColor = nil
         item.button?.alphaValue = 1
         item.button?.toolTip = "\(peripheral.name) — \(title(for: peripheral.state))"
-        item.button?.setAccessibilityLabel("\(peripheral.type.displayName): \(peripheral.name), \(title(for: peripheral.state))")
+        let kindName = peripheral.type == .speaker && peripheral.audioKind == .headphones ? "Headphones" : peripheral.type.displayName
+        item.button?.setAccessibilityLabel("\(kindName): \(peripheral.name), \(title(for: peripheral.state))")
 
         if let menu = menus[peripheral.type] {
             updateInfoItem(menu.items[0], title: peripheral.name, display: NSAttributedString(string: peripheral.name, attributes: [

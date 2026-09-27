@@ -1,25 +1,26 @@
 import AppKit
 
 enum StatusIcon {
-    static func image(for type: PeripheralType, state: ConnectionState, style: IndicatorStyle, family: IconFamily, name: String) -> NSImage? {
+    static func image(for type: PeripheralType, state: ConnectionState, style: IndicatorStyle, family: IconFamily, name: String, audioKind: AudioKind = .speaker) -> NSImage? {
         let symbol: NSImage
         if family == .system {
             let symbolName: String
             switch type {
             case .keyboard: symbolName = state == .connected ? "keyboard.fill" : "keyboard"
             case .mouse: symbolName = state == .connected ? "computermouse.fill" : "computermouse"
-            case .speaker: symbolName = state == .connected ? "speaker.wave.2.fill" : "speaker.slash"
+            case .speaker:
+                symbolName = audioKind == .headphones ? "airpodspro" : (state == .connected ? "speaker.wave.2.fill" : "speaker.slash")
             }
             guard let systemSymbol = NSImage(systemSymbolName: symbolName, accessibilityDescription: name)?
                 .withSymbolConfiguration(.init(pointSize: 16, weight: .semibold)) else { return nil }
             symbol = systemSymbol
         } else {
-            guard let generated = NSImage(named: NSImage.Name(family.assetName(for: type))) else { return nil }
+            guard let generated = NSImage(named: NSImage.Name(family.assetName(for: type, audioKind: audioKind))) else { return nil }
             symbol = generated
         }
 
         let size = NSSize(width: 20, height: 18)
-        let shapeBadge = style == .shape && family != .system && state != .unavailable
+        let shapeBadge = style == .shape && (family != .system || (type == .speaker && audioKind == .headphones)) && state != .unavailable
         let iconColor: NSColor
         switch style {
         case .shape:

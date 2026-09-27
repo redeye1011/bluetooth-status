@@ -38,4 +38,20 @@ final class SystemProfilerSnapshotTests: XCTestCase {
         let snapshot = try XCTUnwrap(SystemProfilerSnapshot.parse(Data(json.utf8)))
         XCTAssertEqual(snapshot.batteryPercentByAddress, ["K": 0, "M": 100, "S": 82])
     }
+
+    func testClassifiesAudioDevicesFromBluetoothType() throws {
+        let json = """
+        {"SPBluetoothDataType":[{
+          "controller_properties":{"controller_state":"attrib_on"},
+          "device_connected":[
+            {"Living Room":{"device_address":"S","device_minorType":"Speaker"}},
+            {"Studio Set":{"device_address":"H","device_minorType":"Headphones"}},
+            {"Call Set":{"device_address":"C","device_minorType":"Headset"}},
+            {"My AirPods":{"device_address":"A"}}
+          ]
+        }]}
+        """
+        let devices = try XCTUnwrap(SystemProfilerSnapshot.parse(Data(json.utf8))).devices
+        XCTAssertEqual(devices.map(\.audioKind), [.speaker, .headphones, .headphones, .headphones])
+    }
 }
