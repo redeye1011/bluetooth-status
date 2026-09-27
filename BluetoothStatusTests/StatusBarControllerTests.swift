@@ -208,6 +208,32 @@ final class StatusBarControllerTests: XCTestCase {
         }
     }
 
+    func testGeneratedOutlineFillAndBlackWhiteUseDifferentBadgeShapes() {
+        let devices: [(PeripheralType, AudioKind)] = [
+            (.keyboard, .speaker), (.mouse, .speaker), (.speaker, .speaker), (.speaker, .headphones)
+        ]
+        for family in [IconFamily.a, .b, .c] {
+            for (type, audioKind) in devices {
+                let outlined = StatusIcon.image(for: type, state: .connected, style: .shape, family: family, name: type.displayName, audioKind: audioKind)
+                let monochrome = StatusIcon.image(for: type, state: .connected, style: .monochrome, family: family, name: type.displayName, audioKind: audioKind)
+                XCTAssertGreaterThan(alpha(atX: 2, y: 3, in: outlined), 0.5, "\(family) \(type) square badge")
+                XCTAssertLessThan(alpha(atX: 2, y: 3, in: monochrome), 0.1, "\(family) \(type) circular badge")
+            }
+        }
+    }
+
+    private func alpha(atX x: Int, y: Int, in image: NSImage?) -> CGFloat {
+        guard let image, let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 20, pixelsHigh: 18,
+                                                       bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+                                                       isPlanar: false, colorSpaceName: .deviceRGB,
+                                                       bytesPerRow: 0, bitsPerPixel: 0) else { return 0 }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
+        image.draw(in: NSRect(x: 0, y: 0, width: 20, height: 18))
+        NSGraphicsContext.restoreGraphicsState()
+        return bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0
+    }
+
     private func containsGreen(_ image: NSImage?) -> Bool {
         containsPixel(image) { $0.greenComponent > $0.redComponent * 1.3 && $0.greenComponent > $0.blueComponent * 1.2 }
     }

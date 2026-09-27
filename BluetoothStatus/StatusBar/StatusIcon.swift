@@ -36,7 +36,9 @@ enum StatusIcon {
         }
 
         let glyph = NSImage(size: size, flipped: false) { rect in
-            let scale = min((shapeBadge ? 16 : 17) / symbol.size.width, (shapeBadge ? 14 : 15) / symbol.size.height)
+            let maxWidth: CGFloat = style == .monochrome ? 14 : (shapeBadge ? 16 : 17)
+            let maxHeight: CGFloat = style == .monochrome ? 12 : (shapeBadge ? 14 : 15)
+            let scale = min(maxWidth / symbol.size.width, maxHeight / symbol.size.height)
             let width = symbol.size.width * scale
             let height = symbol.size.height * scale
             let symbolRect = NSRect(x: (rect.width - width) / 2, y: (rect.height - height) / 2, width: width, height: height)
@@ -68,7 +70,7 @@ enum StatusIcon {
 
         guard style == .monochrome, state != .unavailable else { return glyph }
         let badge = NSImage(size: size, flipped: false) { rect in
-            let path = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 4, yRadius: 4)
+            let path = NSBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1))
             (state == .connected ? NSColor.white : NSColor.black).setFill()
             path.fill()
             NSColor.separatorColor.setStroke()
